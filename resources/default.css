@@ -4,7 +4,7 @@
 }
 
 .cm_table_cell {
-	font-size: smaller;
+	font-size: 80%;
 }
 
 td:hover > span.cm_table_cell_filter {
