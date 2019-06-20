@@ -23,7 +23,10 @@
         config: {
 
             css: {
-                default: [ "ccm.load", [ { url: "https://mnutze.github.io/bsc.monitor/resources/default.css" } ] ],
+                default: [ "ccm.load", [
+                    { url: "https://mnutze.github.io/bsc.monitor/resources/default.css" },
+                    { url: "./resources/cm-highcharts.css" }
+                ] ],
                 extern: [ "ccm.load", [
                     { url: "https://mnutze.github.io/bsc.monitoring-courses/libs/css/delos.css" },
                     { url: "https://mnutze.github.io/bsc.monitoring-courses/libs/css/delos_cont.css" },

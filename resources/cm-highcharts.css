@@ -1,9 +1,9 @@
 /* Highcharts custom styles */
 .cm-hc-custom-range rect {
-    height: 18px;
+
 }
 .cm-hc-custom-range text {
-    x: -18px;
+
 }
 .highcharts-menu-0 div.highcharts-menu, .highcharts-menu-1 div.highcharts-menu {
 	box-shadow: rgb(136, 136, 136) 3px 3px 10px !important;

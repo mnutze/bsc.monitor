@@ -47,8 +47,8 @@ ccm.files["monitor.subject_classification.js"] = function (data, instance) {
 
     let series = subjects.map(subject => ({
         name: checkName(subject.key) ? "You" : subject.key.substr(0, 16) + "...",
-        color: checkUser(subject.key) ? "#ff0000" : "#000",
-        marker: checkUser(subject.key) ? { radius: 8 } : {},
+        color: checkSubject(subject.key) ? helper.colors[6] : "#000",
+        marker: checkSubject(subject.key) ? { radius: 4 } : {},
         data: [[subject.histograms[weekSelector].length, subject.histograms.slice(0,weekSelector+1).reduce((prev, curr) => curr.length + prev, 0)/weekSelector+1]]
     }));
 
@@ -87,8 +87,10 @@ ccm.files["monitor.subject_classification.js"] = function (data, instance) {
         series: series
     };
 
-    function checkUser (val) {
-        if (!instance.profile)
+    function checkSubject (val) {
+        if (instance.subject.values && instance.subject.values.includes(val))
+            return true;
+        else if (!instance.profile)
             return false;
         else if (instance.profile.user !== val)
             return false;
