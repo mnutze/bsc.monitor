@@ -1,4 +1,4 @@
-ccm.files["monitor.facts.js"] = function (data, instance) {
+ccm.files["widget.course_statistics.js"] = function (data, instance) {
 
     let $ = instance.ccm.helper,
         helper = instance.helper;
@@ -23,6 +23,7 @@ ccm.files["monitor.facts.js"] = function (data, instance) {
 
     let Exercises = {};
 
+    /*
     data.forEach(dataset => {
         if (!Learners.list.includes(dataset.user.user))
             Learners.list.push(dataset.user.user);
@@ -30,6 +31,7 @@ ccm.files["monitor.facts.js"] = function (data, instance) {
         if (!Teams.list.includes(dataset.team))
             Teams.list.push(dataset.team);
     });
+    */
 
-    return { aggregated: data };
+    return { aggregated: Learners };
 };

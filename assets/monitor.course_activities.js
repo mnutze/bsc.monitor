@@ -1,4 +1,4 @@
-ccm.files["monitor.leader.js"] = function (data, instance) {
+ccm.files["monitor.course_activities.js"] = function (data, instance) {
 
     let $ = instance.ccm.helper,
         helper = instance.helper;
@@ -83,12 +83,6 @@ ccm.files["monitor.leader.js"] = function (data, instance) {
         "legend.reversed": true,
         "plotOptions.series.stacking": "normal",
         "yAxis.min": 0,
-        "yAxis.plotLines": [{
-            value: 0,
-            label: { style: { fontWeight: "bold" },
-                text: instance.range.range,
-                align: 'right', x: -5, y: -(instance.size.height-125) }
-        }],
         "tooltip.shared": true,
         "chart.type": chart,
         series: []

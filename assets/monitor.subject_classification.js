@@ -9,7 +9,6 @@ ccm.files["monitor.subject_classification.js"] = function (data, instance) {
     if (data.length < 1)
         return;
 
-    console.log(instance.subject);
     let domain = [ new Date(data[0].created_at), new Date(data[data.length-1].created_at)];
 
     let emptyHistogram = helper.datetime.histogram([], domain, helper.datetime.mondayWeek(), 1);
@@ -46,7 +45,7 @@ ccm.files["monitor.subject_classification.js"] = function (data, instance) {
     let classificationLegend = "Q1: Heading | Q2: Lowering | Q3: At Risk | Q4: Improving"
 
     let series = subjects.map(subject => ({
-        name: checkName(subject.key) ? "You" : subject.key.substr(0, 16) + "...",
+        name: checkName(subject.key) ? instance.teams ? "Your Team" : "You" : subject.key,
         color: checkSubject(subject.key) ? helper.colors[6] : "#000",
         marker: checkSubject(subject.key) ? { radius: 4 } : {},
         data: [[subject.histograms[weekSelector].length, subject.histograms.slice(0,weekSelector+1).reduce((prev, curr) => curr.length + prev, 0)/weekSelector+1]]
@@ -59,12 +58,12 @@ ccm.files["monitor.subject_classification.js"] = function (data, instance) {
         "chart.type": "scatter",
         xAxis: {
             gridLineWidth: 0,
-            title: { enabled: true, text: 'Activity - last week', offset: 25 },
+            title: { enabled: true, text: 'Activities - last week', offset: 25 },
             //min: 0, startOnTick: true, endOnTick: true, showLastLabel: true, max: null,
             plotLines: [ { color: "#ccc", value: maxX/2, width: 1 } ],
         },
         yAxis: {
-            title: { text: 'Activity - week avg', offset: 40 },
+            title: { text: 'Activities - week-avg', offset: 40 },
             //min: 0, startOnTick: true, endOnTick: true, maxPadding: 0,
             max: null,
             endOnTick: false,
@@ -99,6 +98,8 @@ ccm.files["monitor.subject_classification.js"] = function (data, instance) {
     }
 
     function checkName (val) {
+        if (instance.subject.values && instance.subject.values.includes(val))
+            return true;
         if (!instance.profile)
             return false;
         else return !(instance.profile.name.length < 1 || instance.profile.user !== val);

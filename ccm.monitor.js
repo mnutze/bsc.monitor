@@ -59,6 +59,7 @@
 
             js : [ "ccm.load", [
                 { url: "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js" },
+                { url: "https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.13/moment-timezone-with-data-2012-2022.min.js" },
             ] ],
 
             user: [ "ccm.instance", "https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.0.1.js", {
@@ -88,6 +89,8 @@
                         return moment(timestamp).isoWeek();
                     }
                 };
+
+                Highcharts.setOptions( { time: { timezone: 'Europe/Berlin' } } );
 
                 // load jsonLogic only once
                 !window.jsonLogic && await self.ccm.load("https://mnutze.github.io/bsc.monitoring-courses/libs/js/logic.js");
@@ -161,7 +164,7 @@
                 // put main HTML structure into frontend
                 $.setContent( self.element, $.html( self.html.main ) );
 
-                self.element.style = "height: 100vh;";
+                self.element.style = "height: inherit;";
                 if (!self.size)
                     self.size = self.element.getBoundingClientRect();
 
@@ -294,13 +297,18 @@
                     else
                         dataset = self.helper.filterData([dataset])[0];
 
+                    //console.log(self.widget, dataset);
                     if (!dataset)
                         return;
 
                     if (self.teams) // extend log entries with a property team and the user corresponding team-value
                         dataset = self.helper.teams([dataset])[0];
 
-                    if ($.isObject(source)) {
+                    /**
+                     * @info source.name === "log" -> log-entries must not be checked, if these are an update for
+                     * an existing dataset. Log-entries are stacked (old->new) and may not modified. So skip the modify-check
+                     */
+                    if ($.isObject(source) && source.name !== "log") { //
                         let __replaced = false;
                         self.data[source.name] = self.data[source.name].reduce((prev, curr) => {
                             if (curr.key === dataset.key) {
@@ -311,9 +319,11 @@
                         }, []);
                         if (!__replaced)
                            self.data[source.name].push(dataset);
-                    }
+                    } else
+                        self.data[source.name].push(dataset);
                 }
                 else if (Array.isArray(dataset)) {
+                    //console.log(self.widget, dataset);
                     self.data[source.name] = self.data[source.name].concat(self.helper.filterData(dataset, source.filter));
                     if (self.teams) // extend log entries with a property team and the user corresponding team-value
                         self.data[source.name] = self.helper.teams(self.data[source.name]);
@@ -620,7 +630,6 @@
             function render() {
                 return {
                     custom: data => {
-                        console.log(data);
                         $.setContent( self.element.querySelector( "#main" ), $.html(data, {
                             height: self.size.height - 60
                         } ) );
@@ -636,6 +645,7 @@
                                 'stroke-width': 1,
                                 stroke: "#dadade",
                                 r: 0,
+                                padding: 5,
                                 height: 12,
                                 "font-size": "10px"
                             },
@@ -715,26 +725,19 @@
                                 marginTop: 50
                             },
                             colors: self.helper.colors,
-                            title: { text: "" },
-                            xAxis: { maxPadding: 0.02 },
-                            plotOptions: { series: { states: { inactive: { opacity: 1 } } } },
+                            "exporting.buttons.contextButton.enabled": false,
                             legend: {
                                 enabled: false,
                                 align: 'right',
                                 verticalAlign: 'top',
                                 borderWidth: 0,
-                                /*
-                                    useHTML: true,
-                                labelFormatter: function () {
-                                    return '<h3 title="' + this.name + '">' + this.name + '</h3>';
-                                },*/
                                 symbolHeight: 0,
                                 symbolPadding: 0,
                                 symbolRadius: 0,
                                 x: -25
                             },
                             navigator: { enabled: false, },
-                            scrollbar: { enabled: false, },
+                            plotOptions: { series: { states: { inactive: { opacity: 1 } } } },
                             rangeSelector: { enabled: false },
                             responsive: {
                                 rules: [{
@@ -769,7 +772,10 @@
                                     }
                                 }]
                             },
-                            "tooltip.valueDecimals": 2
+                            scrollbar: { enabled: false, },
+                            title: { text: "" },
+                            "tooltip.valueDecimals": 2,
+                            xAxis: { maxPadding: 0.02 },
                         };
 
                         settings = $.convertObjectKeys(Object.assign(settings, intervalButton, rangeButton));
@@ -779,7 +785,7 @@
                         if ($.isObject(self.render.highcharts))
                             settings = $.convertObjectKeys(Object.assign(settings, self.render.highcharts));
 
-                        console.log(settings)
+                        // console.log(settings) // @TODO remove debug print before live
                         if (!self.visualization) {
                             rerender = false;
                             const div = document.createElement( 'div' );
@@ -798,6 +804,10 @@
                     },
                     none: data => {
                         //console.log(data);
+                    },
+                    multiple_tables: data => {
+                        //console.log(data);
+                        $.setContent( self.element.querySelector( "#main" ), "" );
                     },
                     table: data => {
                         if (!data)
@@ -889,7 +899,7 @@
                                 .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
                                 .forEach(tr => tbody.appendChild(tr) );
                         })));
-                    }
+                    },
                 };
             }
 

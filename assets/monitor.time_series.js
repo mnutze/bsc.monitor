@@ -15,6 +15,10 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
 
         if (instance.range && instance.range.range !== null)
             data = helper.filterData(data, { range: helper.timeRanges.get(instance.range.range)(new Date) } );
+        else {
+            instance.range.range = "last 7d";
+            data = helper.filterData(data, { range: helper.timeRanges.get(instance.range.range)(new Date) } );
+        }
 
         let day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -50,7 +54,12 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
         return {
             "xAxis.labels.format": "{value}:00",
             yAxis: [
-                { title: { text: "total-activity/h at weekday" }},
+                { title: { text: "total-activity/h at weekday" }, plotLines: [{
+                            value: 0,
+                            label: { style: { fontWeight: "bold" },
+                                text: instance.range.range,
+                                align: 'right', x: -5, y: -(instance.size.height-125) }
+                        }] },
                 //{ title: { text: "Events per h at week" }, opposite: true }
             ],
             series: [
@@ -132,7 +141,7 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
                             value: 0,
                             label: { style: { fontWeight: "bold" },
                                 text: instance.range.range,
-                                align: 'right', x: -5, y: -(instance.size.height*0.70) }
+                                align: 'right', x: -5, y: -(instance.size.height-125) }
                         }
                     ]
                 },
