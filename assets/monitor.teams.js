@@ -20,7 +20,7 @@ ccm.files["monitor.teams.js"] = function (data, instance) {
                 { and: [ { "===" : [ { var : "parent.name" }, "comment" ] }, { "===" : [ { var : "event" }, "create" ] } ] },
                 { and: [ { "===" : [ { var : "parent.name" }, "submit" ] }, { "===" : [ { var : "event" }, "submit" ] } ] },
                 { and: [ { "===" : [ { var : "parent.name" }, "cloze" ] }, { "===" : [ { var : "event" }, "finish" ] } ] },
-                { and: [ { "===" : [ { var : "parent.name" }, "regex" ] }, { "===" : [ { var : "event" }, "regex" ] } ] },
+                //{ and: [ { "===" : [ { var : "parent.name" }, "regex" ] }, { "===" : [ { var : "event" }, "regex" ] } ] },
                 { and: [ { "===" : [ { var : "parent.name" }, "regex" ] }, { "===" : [ { var : "event" }, "plus" ] } ] },
                 { and: [ { "===" : [ { var : "parent.name" }, "regex" ] }, { "===" : [ { var : "event" }, "eval" ] } ] },
                 { and: [ { "===" : [ { var : "parent.name" }, "quick_decide" ] }, { "===" : [ { var : "event" }, "click" ] } ] },
@@ -39,6 +39,8 @@ ccm.files["monitor.teams.js"] = function (data, instance) {
     let teams = instance.teams.teams;
 
     data = data.reduce((prev, curr) => {
+        if (!teams[$.deepValue(curr, instance.subject.key)])
+            return prev;
         if (!prev[$.deepValue(curr, instance.subject.key)])
             prev[$.deepValue(curr, instance.subject.key)] = {
                 key: $.deepValue(curr, instance.subject.key),
