@@ -123,7 +123,7 @@ nav label.open {
 
 /* sizes */
 @media only screen and (max-width: 1600px) {
-	.sm-team-members {
+	.cm-team-members {
 		font-size: smaller;
 	}
 }
