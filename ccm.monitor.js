@@ -80,6 +80,12 @@
                 //!window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highstock/6.0.3/js/modules/exporting.js" );
 
+                Highcharts.dateFormats = {
+                    W: function (timestamp) {
+                        return moment(timestamp).isoWeek();
+                    }
+                };
+
                 // load jsonLogic only once
                 !window.jsonLogic && await self.ccm.load("https://mnutze.github.io/bsc.monitoring-courses/libs/js/logic.js");
 
@@ -208,7 +214,6 @@
                         return data;
                     if (!rules)
                         return;
-
                     return data.filter(dataset => jsonLogic.apply(rules, dataset));
                 },
                 solveTeams: () => {},
@@ -768,7 +773,7 @@
                         if ($.isObject(self.render.highcharts))
                             settings = $.convertObjectKeys(Object.assign(settings, self.render.highcharts));
 
-                        //console.log(settings)
+                        console.log(settings)
 
                         if (!self.visualization) {
                             rerender = false;

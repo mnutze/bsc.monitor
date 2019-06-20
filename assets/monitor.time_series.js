@@ -50,11 +50,11 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
         return {
             "xAxis.labels.format": "{value}:00",
             yAxis: [
-                { title: { text: "Events per h at day" }, opposite: true},
-                { title: { text: "Events per h at week" } }
+                { title: { text: "total-activity/h at weekday" }},
+                //{ title: { text: "Events per h at week" }, opposite: true }
             ],
             series: [
-                {type: "column", dashStyle: 'shortdot', yAxis: 1, color: "#ccc", name: "week", data: week},
+                //{type: "column", dashStyle: 'shortdot', yAxis: 1, color: "#ccc", name: "week", data: week},
                 ...aggregated
             ], "plotOptions.series.marker.enabled": false,
             tooltip: { enabled: true, shared: true}
@@ -66,7 +66,6 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
             instance.range.range = "last 7d";
         } else
             data = helper.filterData(data, { range: helper.timeRanges.get(instance.range.range)(new Date) } );
-
 
         let interval = [helper.timeSlices().get(instance.interval.current)[0], helper.timeSlices().get(instance.interval.current)[1]];
         let subject = instance.subject.key;
@@ -80,7 +79,7 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
         let wanted = viewOptions.map(key => data.filter(dataset => $.deepValue(dataset, subject) === key));
 
         let selected = wanted.map((filtered, i) => ({
-            name: viewOptions[i],
+            name: subject !== "team" ? viewOptions[i] : instance.teams.teams[viewOptions[i]].name,
             color: helper.colors[i % helper.colors.length],
             data: helper.datetime.histogram(filtered, domain, ...interval).map(range => [Date.parse(range.x1), range.length]),
             type: "spline",
@@ -96,8 +95,8 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
                 distinct = [];
                 return [Date.parse(range.x1), range
                     .reduce((prev, curr) => {
-                        if(!distinct.includes($.deepValue(curr, "user.user"))) {
-                            distinct.push($.deepValue(curr, "user.user"));
+                        if(!distinct.includes($.deepValue(curr, subject))) {
+                            distinct.push($.deepValue(curr, subject));
                             return prev + 1;
                         }
                         return prev;
