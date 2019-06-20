@@ -124,6 +124,6 @@ nav label.open {
 /* sizes */
 @media only screen and (max-width: 1600px) {
 	.cm-team-members {
-		font-size: smaller;
+		font-size: 80%;
 	}
 }
