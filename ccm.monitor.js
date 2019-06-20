@@ -618,7 +618,7 @@
                 return {
                     custom: data => {
                         $.setContent( self.element.querySelector( "#main" ), $.html(data, {
-                            height: self.monitor.size.height - 60
+                            height: self.size.height - 60
                         } ) );
                     },
                     highcharts: data => {
@@ -773,8 +773,6 @@
                         if ($.isObject(self.render.highcharts))
                             settings = $.convertObjectKeys(Object.assign(settings, self.render.highcharts));
 
-                        console.log(settings)
-
                         if (!self.visualization) {
                             rerender = false;
                             const div = document.createElement( 'div' );
@@ -806,7 +804,7 @@
                                         id: $.deepValue(dataset, key),
                                         inner: $.deepValue(dataset, key) ,
                                         onclick: function (event) {
-                                            self.parent.fromChild.panel(dataset.key, self.render.notifyParent);
+                                            self.parent.fromChild.panel(dataset.key, self.subject, self.teams ? true : false);
                                         }
                                 };
                                 if (key === "created_at" || key === "updated_at")
