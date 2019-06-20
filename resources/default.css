@@ -86,7 +86,7 @@ nav label.open {
 /* ************************* */
 
 /* Highcharts custom styles */
-.cm-hc-custom-range {
+.cm-hc-custom-range text {
     height: 14px;
 }
 .highcharts-menu-0 div.highcharts-menu, .highcharts-menu-1 div.highcharts-menu {
