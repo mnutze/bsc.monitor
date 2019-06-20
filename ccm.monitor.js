@@ -75,9 +75,9 @@
             this.init = async () => {
 
                 // make sure that "highstock.js" library is executed only once
-                !window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.1/highstock.js" );
+                //!window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.1/highstock.js" );
 
-                //!window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts.js" );
+                !window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highstock/6.0.3/js/modules/exporting.js" );
 
                 Highcharts.dateFormats = {
@@ -617,6 +617,7 @@
             function render() {
                 return {
                     custom: data => {
+                        console.log(data);
                         $.setContent( self.element.querySelector( "#main" ), $.html(data, {
                             height: self.size.height - 60
                         } ) );
@@ -666,8 +667,10 @@
                             rangeButton = {
                                 "exporting.buttons.range": {
                                     align: 'left',
+                                    height: 14,
                                     x: buttonsSettings.x.pop(),
                                     y: buttonsSettings.y.pop(),
+                                    className: "cm-hc-custom-range",
                                     theme: buttonsSettings.theme,
                                     text: "Range",
                                     menuItems: function () {
@@ -773,6 +776,7 @@
                         if ($.isObject(self.render.highcharts))
                             settings = $.convertObjectKeys(Object.assign(settings, self.render.highcharts));
 
+                        console.log(settings)
                         if (!self.visualization) {
                             rerender = false;
                             const div = document.createElement( 'div' );
@@ -804,7 +808,7 @@
                                         id: $.deepValue(dataset, key),
                                         inner: $.deepValue(dataset, key) ,
                                         onclick: function (event) {
-                                            self.parent.fromChild.panel(dataset.key, self.subject, self.teams ? true : false);
+                                            self.parent.fromChild.panel(dataset.key, self.subject, !!self.teams);
                                         }
                                 };
                                 if (key === "created_at" || key === "updated_at")
