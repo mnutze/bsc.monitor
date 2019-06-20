@@ -741,18 +741,14 @@
                             rangeSelector: { enabled: false },
                             responsive: {
                                 rules: [{
-                                    condition: {
-                                        maxWidth: 500
-                                    },
+                                    condition: { maxWidth: 500 },
                                     chartOptions: {
                                         legend: {
                                             align: 'center',
                                             verticalAlign: 'bottom',
                                             layout: 'horizontal'
                                         },
-                                        xAxis: {
-                                            "labels.step": 5,
-                                        },
+                                        xAxis: { "labels.step": 5 },
                                         yAxis: {
                                             labels: {
                                                 align: 'left',
@@ -763,12 +759,8 @@
                                                 x: -15
                                             }
                                         },
-                                        subtitle: {
-                                            text: null
-                                        },
-                                        credits: {
-                                            enabled: false
-                                        }
+                                        subtitle: { text: null },
+                                        credits: { enabled: false }
                                     }
                                 }]
                             },
@@ -813,6 +805,9 @@
                         if (!data)
                             return;
 
+                        let filterAbility = data.filterAbility;
+                        if (!!filterAbility)
+                            null;
                         function setCell (dataset, key, link) {
                             if (!Array.isArray($.deepValue(dataset, key))) {
                                 if (link === "subject")
@@ -868,7 +863,30 @@
                         let rows = Object.values(data.aggregated).reduce((prev, subject) => {
                             prev = prev.concat(
                                 { tag: "tr", inner: columns.order.map(td => $.format(self.templates.tables.td, {
-                                    tdInner: setCell(subject, columns[td].key, td)
+                                    //tdInner: setCell(subject, columns[td].key, td) // without filterAbility @TODO remove before live
+                                        tdInner: [
+                                            {
+                                                tag: "span",
+                                                class: "cm_table_cell",
+                                                inner: setCell(subject, columns[td].key, td)
+                                            },
+                                            {
+                                                tag: "span",
+                                                class: "cm_table_cell_filter",
+                                                inner: [
+                                                    {
+                                                        tag: "span",
+                                                        class: "glyphicon glyphicon-zoom-in",
+                                                        onclick: ev => config().filter.add(value, __filter, true)
+                                                    },
+                                                    {
+                                                        tag: "span",
+                                                        class: "glyphicon glyphicon-zoom-out",
+                                                        onclick: ev => config().filter.add(value, __filter, false)
+                                                    }
+                                                ]
+                                            }
+                                        ]
                                     }))},
                             );
                             return prev;

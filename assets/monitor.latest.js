@@ -30,5 +30,5 @@ ccm.files["monitor.latest.js"] = function (data, instance) {
     // reverse data, so get newest data first
     data = data.reverse();
 
-    return { aggregated: data };
+    return { aggregated: data, filterAbility: true };
 };
