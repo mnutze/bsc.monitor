@@ -9,10 +9,6 @@ ccm.files["monitor.teams.js"] = function (data, instance) {
     if (data.length < 1)
         return;
 
-    if (instance.subject && instance.subject.teams) {
-        data = helper.teams(data);
-    }
-
     let rules = {
         // (youtube && onStateChange) || (quiz && finish) ||
         action: {
@@ -34,7 +30,7 @@ ccm.files["monitor.teams.js"] = function (data, instance) {
 
     let domain = d3.extent(data, datum => new Date(datum.created_at));
 
-    let teams = instance.teams.get();
+    let teams = instance.teams.teams;
 
     data = data.reduce((prev, curr) => {
         if (!prev[$.deepValue(curr, instance.subject.key)])
@@ -53,7 +49,7 @@ ccm.files["monitor.teams.js"] = function (data, instance) {
                     action: jsonLogic.apply(rules.action, curr) ? [ { created_at: curr.created_at } ] : []
                 },
                 members: [curr.user.user],
-                label: teams.teams.filter(team => team.key === $.deepValue(curr, instance.subject.key))[0].name
+                label: teams[$.deepValue(curr, instance.subject.key)].name
             };
         else {
             prev[$.deepValue(curr, instance.subject.key)].profile.online =

@@ -29,7 +29,10 @@ ccm.files[ "templates.js" ] = {
             { tag: "tr", inner: "%content%" },
             { tag: "tr", class: "hide", inner: "%details%" },
             { tag: "tr", class: "hide" }
-        ]
+        ],
+        td: {
+            tag: "td", class: "sm-cell small", inner: "%tdInner%", style: "font-size: 80%"
+        }
     },
     row: {
         tag: "tr", inner: "%content%"

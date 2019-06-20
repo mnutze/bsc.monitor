@@ -1,23 +1,28 @@
 ccm.files["monitor.success.js"] = function (data, instance) {
 
-    let monitor = instance.monitor,
-        $ = instance.ccm.helper,
+    let $ = instance.ccm.helper,
         helper = instance.helper;
+
+    // assign log data
+    data = data.solutions;
+
+    if (data.length < 1)
+        return;
 
     let subjects = [];
     data = data.reduce((prev, curr) => {
         if(!subjects.includes(curr.key[1]))
             subjects.push(curr.key[1]);
 
-        if (!prev[curr.key[0]] && monitor.pointMapping[curr.key[0]]){
+        if (!prev[curr.key[0]] && instance.pointMapping[curr.key[0]]){
             prev[curr.key[0]] = {
-                points: monitor.pointMapping[curr.key[0]].points,
-                deadline: monitor.pointMapping[curr.key[0]].deadline,
-                total: !monitor.pointMapping[ curr.key[0] ].deadline || moment( monitor.pointMapping[ curr.key[0] ].deadline ).isAfter( curr.created_at ) ? monitor.pointMapping[ curr.key[0] ].points : 0,
+                points: instance.pointMapping[curr.key[0]].points,
+                deadline: instance.pointMapping[curr.key[0]].deadline,
+                total: !instance.pointMapping[ curr.key[0] ].deadline || moment( instance.pointMapping[ curr.key[0] ].deadline ).isAfter( curr.created_at ) ? instance.pointMapping[ curr.key[0] ].points : 0,
                 subjects: 1
             };
         }
-        else if (monitor.pointMapping[curr.key[0]]) {
+        else if (instance.pointMapping[curr.key[0]]) {
             prev[curr.key[0]].subjects += 1;
             prev[curr.key[0]].total += !prev[curr.key[0]].deadline || moment( prev[curr.key[0]].deadline ).isAfter( curr.created_at ) ? prev[curr.key[0]].points : 0;
         }

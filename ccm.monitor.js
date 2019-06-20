@@ -23,12 +23,12 @@
         config: {
 
             css: {
-                default: [ "ccm.load", [ { url: "resources/default.css" } ] ],
+                default: [ "ccm.load", [ { url: "https://mnutze.github.io/bsc.monitor/resources/default.css" } ] ],
                 extern: [ "ccm.load", [
                     { url: "https://mnutze.github.io/bsc.monitoring-courses/libs/css/delos.css" },
                     { url: "https://mnutze.github.io/bsc.monitoring-courses/libs/css/delos_cont.css" },
                     { url: "https://mnutze.github.io/bsc.monitoring-courses/libs/css/fonts.css" },
-                    { url: "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/css/highcharts.css" }
+
                 ] ]
             },
 
@@ -246,42 +246,13 @@
                         return histogram(data);
                     }
                 },
-                teams: (data, teams) => { // connect log-data of user with their team
-                    if (teams) { // an array of team-lists -> will be merged to one big list
-                        teams = teams.reduce((prev, curr) => {
-                            prev.teams = prev.teams.concat(curr.teams);
-                            return prev;
-                        },{ teams: [] });
-
-                        let learners = {};
-                        teams.teams.forEach(team => team.members.forEach(learner => learners[learner] = team.key));
-
-                        data = data.map(dataset => {
-                            dataset.team = dataset.user.user ? learners[dataset.user.user] : undefined;
-                            return dataset;
-                        });
-                    }
-                    else { // no teams with hashed members from ccm-teambuild available, let's mock something
-                        let learners = [];
-                        teams = { teams: [] };
-                        data = data.map(dataset => {
-                            if (dataset.user && learners.indexOf(dataset.user.user) === -1) {
-                                learners.push(dataset.user.user);
-                                if ( (learners.length - 1) % 4 === 0)
-                                    teams.teams.push({
-                                        key: "t" + $.generateKey(),
-                                        members: { [dataset.user.user]: true },
-                                        name: "Team " + ((teams.teams.length - 1 / 4) + 1).toFixed(0)
-                                    });
-                                else
-                                    teams.teams[parseInt(learners.indexOf(dataset.user.user)/4)].members[dataset.user.user] = true;
-                            }
-                            dataset.team = teams.teams[parseInt(learners.indexOf(dataset.user.user)/4)].key;
-                            return dataset;
-                        });
-                    }
-                    self.teams.set(teams);
-                    return data;
+                teams: data => { // connect log-data of user with their team
+                    return data.map(dataset => {
+                        if (dataset.user && dataset.user.user)
+                            dataset.team = self.teams.learners[dataset.user.user] ?
+                                self.teams.learners[dataset.user.user] : undefined;
+                        return dataset
+                    });
                 }
             };
 
@@ -305,12 +276,6 @@
                 await self.rerender();
             };
 
-            this.teams = {
-                value: null,
-                set: value => this.teams.value = value,
-                get: () => this.teams.value
-            };
-
             this.update = async (dataset, source, flag) => await update(dataset, self.sources[source]);
 
             async function update (dataset, source) {
@@ -323,6 +288,9 @@
 
                     if (!dataset)
                         return;
+
+                    if (self.teams) // extend log entries with a property team and the user corresponding team-value
+                        dataset = self.helper.teams([dataset])[0];
 
                     if ($.isObject(source)) {
                         let __replaced = false;
@@ -339,6 +307,8 @@
                 }
                 else if (Array.isArray(dataset)) {
                     self.data[source.name] = self.data[source.name].concat(self.helper.filterData(dataset, source.filter));
+                    if (self.teams) // extend log entries with a property team and the user corresponding team-value
+                        self.data[source.name] = self.helper.teams(self.data[source.name]);
                 }
 
                 let data = self.data;
@@ -877,7 +847,9 @@
                         // @Todo Up&Down icons for sorting
                         let rows = Object.values(data.aggregated).reduce((prev, subject) => {
                             prev = prev.concat(
-                                { tag: "tr", inner: columns.order.map(td => ({tag: "td", class: "sm-cell small", inner: setCell(subject, columns[td].key, td)}))},
+                                { tag: "tr", inner: columns.order.map(td => $.format(self.templates.tables.td, {
+                                    tdInner: setCell(subject, columns[td].key, td)
+                                    }))},
                             );
                             return prev;
                         }, [] ) ;
