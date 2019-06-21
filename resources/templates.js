@@ -85,7 +85,7 @@ ccm.files[ "templates.js" ] = {
                 }
             },
             {
-                class: "sidebar",
+                class: "cm-monitor-sidebar",
                 inner: [
                     {
                         class: "monitorOptions",
@@ -94,16 +94,20 @@ ccm.files[ "templates.js" ] = {
                     {
                         class: "monitorFilter",
                         style: "text-align: left; padding: 4px; overflow-y: scroll",
+                        inner: [
+                            { tag: "span", style: "font-size: smaller; display: block; font-weight: bold;", inner: "Filter" },
+                            { id: "monitorFilterList" }
+                        ]
                     },
                     {
                         style: "position: absolute; bottom: 5px; right: 10px",
                         inner: [
-                            {
+                            /*{
                                 tag: "span",
                                 id: "apply-options",
                                 class: "glyphicon glyphicon-ok",
                                 style: "text-align: left; padding-right: 10px;"
-                            },
+                            },*/
                             {
                                 tag: "span",
                                 id: "close-options",

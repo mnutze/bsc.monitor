@@ -83,6 +83,7 @@
 
                 !window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highstock/6.0.3/js/modules/exporting.js" );
+                //await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/heatmap.js" );
 
                 Highcharts.dateFormats = {
                     W: function (timestamp) {
@@ -187,28 +188,26 @@
                     for (let key of keys)
                         if ($.isDatastore(self.stores[key].store))
                             self.stores[key].store.onchange = async dataset => await update(dataset, {
-                                name: key, filter: self.stores[key].onchangeFilter
-                            });
+                                name: key, filter: self.stores[key].onchangeFilter});
                 }
 
-                return;
-                if (self.monitor.options) {
+                if (self.runtimeOptions) {
                     $.setContent(self.element.querySelector("#optionsControl"), $.html(self.templates.nav.wrapper));
+
                     navContainer = {
                         options: self.element.querySelector(".monitorOptions"),
                         filter: self.element.querySelector(".monitorFilter")
                     };
-                    if (self.monitor.options.range && self.monitor.options.range.enabled)
-                        navContainer.options.appendChild($.html(self.templates.nav.filter.range));
 
-                    self.element.querySelector("#optionsControl").querySelector("#apply-options").addEventListener("click", ev => {
-                        self.element.querySelector("#toggle-sidebar").checked = false;
-                        self.rerender();
-                    });
                     self.element.querySelector("#optionsControl").querySelector("#close-options").addEventListener("click", ev => {
                         self.element.querySelector("#toggle-sidebar").checked = false;
                     });
 
+                    return;
+                    self.element.querySelector("#optionsControl").querySelector("#apply-options").addEventListener("click", ev => {
+                        self.element.querySelector("#toggle-sidebar").checked = false;
+                        self.rerender();
+                    });
                 }
             };
 
@@ -341,297 +340,12 @@
                     render()[self.render.key](data);
             }
 
-            function aggregate(data) {
-                return {
-                    activity: {
-                        classification: () => {
-
-                            let domain = [ new Date(data[0].created_at), new Date(data[data.length-1].created_at)];
-                            let slices = d3.scaleTime().domain(domain);
-                            let histogramGen = d3.histogram()
-                                .value(d => new Date(d.created_at))
-                                .domain(slices.domain())
-                                .thresholds(slices.ticks(d3.timeMonday));
-
-                            let emptyHistogram = histogramGen([]);
-
-                            if (self.monitor && self.monitor.range && self.monitor.range.range === "weeks")
-                                self.monitor.range.values = emptyHistogram;
-
-                            let aggregated = data.reduce(function(m, d){
-                                if(!m[d.user.user])
-                                    m[d.user.user] = [{...d}];
-                                else
-                                    m[d.user.user].push({...d});
-                                return m;
-                            },{});
-
-                            let subjects = Object.entries(aggregated).map(subject => ({
-                                key: subject[0],
-                                histograms: histogramGen(subject[1])
-                            }));
-
-                            let weekSelector = 0;
-                            if (!self.monitor.range.current)
-                                emptyHistogram.forEach((histogram, id) => {
-                                    if (moment(new Date()).subtract(7, "day") > histogram.x0 &&
-                                        moment(new Date()).subtract(7, "day") < histogram.x1)
-                                        weekSelector = id;
-                                });
-                            else
-                                emptyHistogram.forEach((histogram, id) => {
-                                    if (self.monitor.range.current[0] >= histogram.x0 &&
-                                        self.monitor.range.current[1] <= histogram.x1)
-                                        weekSelector = id;
-                                });
-                            let selfMarker = {};
-                            let series = subjects.map(subject => ({
-                                name: utils.checkProfile.name(subject.key) ? "You" : subject.key.substr(0, 16) + "...",
-                                color: utils.checkProfile.user(subject.key) ? "#ff0000" : "#000",
-                                marker: utils.checkProfile.user(subject.key) ? { radius: 8 } : {},
-                                data: [[subject.histograms[weekSelector].length, (d3.mean(subject.histograms.slice(0,weekSelector+1), bin => bin.length))]]
-                            }));
-                            return {
-                                "chart.type": "scatter",
-                                xAxis: {
-                                    title: { enabled: true, text: 'Student-Activity - last week', offset: 25 },
-                                    min: 0, startOnTick: true, endOnTick: true, showLastLabel: true,
-                                    plotLines: [ { color: "#000", value: d3.max(series, point => point.data[0][0])/2, width: 1 } ],
-                                },
-                                yAxis: {
-                                    title: { text: 'Student-Activity - week avg', offset: 40 }, min: 0,
-                                    plotLines: [
-                                        { color: "#000", value: d3.max(series, point => point.data[0][1])/2, width: 1 },
-                                        { value: 0, label: { text: 'Q4 - Improving', align: 'right', x: -5, y: -10 } },
-                                        { value: d3.max(series, point => point.data[0][1]), label: { text: 'Q1 - Heading', align: 'right', x: -5, y: -10 } },
-                                        { value: d3.max(series, point => point.data[0][1]), label: { text: 'Q2 - Lowering', x: -5, y: -10 } },
-                                        { value: 0, label: { text: 'Q3 - At Risk', x: -5, y: -10 } }
-                                    ],
-                                },
-                                legend: { enabled: false },
-                                plotOptions: {
-                                    scatter: {
-                                        marker: { symbol: "circle", radius: 2 },
-                                        tooltip: { headerFormat: '<b>{series.name}</b><br>', pointFormat: '{point.x} activities last week | {point.y} avg activities per week' }
-                                    }
-                                },
-                                series: series
-                            };
-                        },
-                        over_range: () => {
-                            let interval = [timeSlices.get(self.monitor.options.inChart.interval.current)[0],
-                                timeSlices.get(self.monitor.options.inChart.interval.current)[1]];
-                            let subject = "";
-
-                            let total = aggregate(data).histogram.datetime(...interval);
-
-                            let wanted = [1,2,3].map(key => data.filter(dataset => $.deepValue(dataset, subject) === key));
-
-                            let selected = aggregate(data.filter(datum => datum.user.user === self.monitor.profile.user))
-                                .histogram.datetime(...interval);
-                            selected = selected.map(range => [Date.parse(range.x1), range.length]);
-                            let mean = total.slice(0);
-                            total = total.map(range => [Date.parse(range.x1), range.length]);
-                            mean = mean.map(range => [Date.parse(range.x1), (range.length < 1 ?
-                                0 : (range.length / d3.nest().key(datum => datum.user.user).entries(range).length))]);
-
-                            return {
-                                series: [
-                                    {type: "column", yAxis: 1, name: 'total', plotOptions: {area: {color: "2ecc70"}},data: total},
-                                    {type: "column", yAxis: 1, name: 'you',data: selected},
-                                    {type: "spline", name: 'avg', data: mean}
-                                ],
-                                "plotOptions.series.marker.enabled": false,
-                                yAxis: [
-                                    { title: { text: 'avg count \\ ' + self.monitor.options.inChart.interval.current }},
-                                    { title: { text: "total count \\ " + self.monitor.options.inChart.interval.current }, opposite: true }
-                                ],
-                                tooltip: { enabled: true, shared: true}
-                            };
-                        },
-                        day_and_time: () => {
-                            let day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-                            let aggregated = data.reduce(function(m, d){
-                                if(!m[day_names[new Date(d.created_at).getDay()]]){
-                                    m[day_names[new Date(d.created_at).getDay()]] = [{...d}];
-                                    return m;
-                                }
-                                m[day_names[new Date(d.created_at).getDay()]].push({...d});
-                                return m;
-                            },{});
-
-                            aggregated = Object.entries(aggregated).map(day => ({
-                                type: "spline", name: day[0], yAxis: 0,
-                                data: Object.assign({},...d3.nest().key(datum => new Date(datum.created_at).getHours())
-                                    .entries(day[1]).map(hour => ({[hour.key]: hour.values.length})))
-
-                            }));
-                            let week = [];
-
-                            for (let i = 0; i < 24; i++) {
-                                let sum = 0;
-                                aggregated.forEach(day => {
-                                    if (!day.data.hasOwnProperty(i))
-                                        day.data[i] = 0;
-                                    sum += day.data[i];
-                                });
-                                week.push([i, sum]);
-                            }
-                            aggregated.forEach(day => day.data = Object.entries(day.data));
-
-                            //return [{type: "column", dashStyle: 'shortdot', yAxis: 1, name: "week", data: week}, ...aggregated] // @TODO deprectated
-
-                            return {
-                                series: [
-                                    {type: "column", dashStyle: 'shortdot', yAxis: 1, name: "week", data: week},
-                                    ...aggregated
-                                ], "plotOptions.series.marker.enabled": false,
-                                tooltip: { enabled: true, shared: true}
-                            };
-                        },
-                    },
-                    groupBy: () => {
-                        data = data.reduce((prev, curr) => {
-                            if (!prev[$.deepValue(curr, key)])
-                                prev[$.deepValue(curr, key)] = [...curr];
-                            else
-                                prev[$.deepValue(curr, key)].push(...curr);
-                            return prev;
-                        }, {});
-                    },
-                    statistics: {
-                        mini: {
-                            distinct: () => {
-                                let subject = self.monitor.options.subject;
-                                // past week
-                                let last7day  = [new Date(moment(new Date()).subtract(7, "day")), new Date()];
-                                let last48h = [new Date(moment(new Date()).subtract(48, "hour")), new Date()];
-                                let domain = [ new Date(data[0].created_at), new Date(data[data.length-1].created_at)];
-                                let slices = d3.scaleTime().domain(domain);
-                                let histogram = d3.histogram().domain(slices.domain()).thresholds(slices.ticks(d3.timeMonday))([]);
-                                histogram.forEach(d => d.count = []);
-
-                                let aggregated = data.reduce(function(prev, curr){
-                                    let currSubject = $.deepValue(curr, subject);
-                                    if (!prev.get("all").has(currSubject))
-                                        prev.get("all").set(currSubject);
-                                    if (!prev.get("last48h").has(currSubject) &&
-                                        new Date(curr.created_at) > last48h[0] && new Date(curr.created_at) < last48h[1] )
-                                        prev.get("last48h").set(currSubject);
-                                    if (!prev.get("last7d").has(currSubject) &&
-                                        new Date(curr.created_at) > last7day[0] && new Date(curr.created_at) < last7day[1] )
-                                        prev.get("last7d").set(currSubject);
-                                    if (prev.get("oldest") === null)
-                                        prev.set("oldest", curr.created_at);
-
-                                    histogram.every(function (d) {
-                                        if (new Date(curr.created_at) > d.x0 && new Date(curr.created_at) < d.x1 && !d.count.includes(currSubject)) {
-                                            d.count.push(currSubject);
-                                            return false
-                                        }
-                                        else
-                                            return true;
-                                    });
-
-                                    prev.set("newest", curr.created_at);
-                                    return prev;
-                                },new Map([["last48h", new Map()], ["last7d", new Map()], ["all", new Map()],
-                                    ["oldest", null], ["newest", null]]));
-
-                                histogram.forEach(d => {
-                                    d.count = d.count.length;
-                                });
-
-                                aggregated.set("histogram", histogram);
-
-                                return aggregated;
-                            },
-                            overall: () => {
-                                let subject = self.monitor.options.subject;
-                                // past week
-                                let last7day  = [new Date(moment(new Date()).subtract(7, "day")), new Date()];
-                                let last48h = [new Date(moment(new Date()).subtract(48, "hour")), new Date()];
-                                let domain = [ new Date(data[0].created_at), new Date(data[data.length-1].created_at)];
-                                let slices = d3.scaleTime().domain(domain);
-                                let histogram = d3.histogram().domain(slices.domain()).thresholds(slices.ticks(d3.timeMonday))([]);
-                                histogram.forEach(d => d.count = 0);
-
-                                let aggregated = data.reduce(function(prev, curr){
-                                    let currSubject = $.deepValue(curr, subject);
-
-                                    if (new Date(curr.created_at) > last48h[0] && new Date(curr.created_at) < last48h[1] )
-                                        prev.set("last48h", prev.get("last48h") + 1 );
-
-                                    if (new Date(curr.created_at) > last7day[0] && new Date(curr.created_at) < last7day[1] )
-                                        prev.set("last7d", prev.get("last7d") + 1 );
-
-                                    if (prev.get("oldest") === null)
-                                        prev.set("oldest", curr.created_at);
-
-                                    prev.set("all", prev.get("all") + 1 );
-                                    prev.set("newest", curr.created_at);
-
-                                    histogram.every(function (d) {
-                                        if (new Date(curr.created_at) > d.x0 && new Date(curr.created_at) < d.x1) {
-                                            d.count++;
-                                            return false
-                                        }
-                                        else
-                                            return true;
-                                    });
-                                    return prev;
-                                },new Map([["last48h", 0], ["last7d", 0], ["all", 0],
-                                    ["oldest", null], ["newest", null]]));
-
-                                aggregated.set("histogram", histogram);
-
-                                return aggregated;
-                            },
-                        },
-                    },
-                    lessons: {
-                        overview: () => {
-                            let lessons = d3.nest().key(d => d.parent.descr.substr(0,d.parent.descr.indexOf("_"))).entries(data);
-                            lessons = lessons.map(lesson => ({
-                                key: lesson.key,
-                                count: lesson.values.length,
-                                min: d3.min(lesson.values, d => new Date(d.created_at)),
-                                max: d3.max(lesson.values, d => new Date(d.created_at)),
-                                tasks: d3.nest().key(d => d.parent.descr).entries(lesson.values).map(task => ({
-                                    key: task.key,
-                                    count: task.values.length,
-                                    min: d3.min(task.values, d => new Date(d.created_at)),
-                                    max: d3.max(task.values, d => new Date(d.created_at)),
-                                    students: (d3.nest().key(d => d.user.user).entries(task.values)).length
-                                })),
-                                students: {
-                                    count: (d3.nest().key(d => d.user.user).entries(lesson.values)).length,
-                                    most: d3.nest().key(d => d.user.user).entries(lesson.values)[d3.nest().key(d => d.user.user).entries(lesson.values).map(d => d.values.length)
-                                        .indexOf(Math.max(...d3.nest().key(d => d.user.user).entries(lesson.values).map(d => d.values.length)))].key,
-                                },
-                                values: lesson.values
-                            }));
-                            return {data: data, key: "Lessons", aggregated: lessons};
-                        },
-                        solutions: () => {
-                            /**
-                             * @TODO HEATMAP!!!
-                             */
-                            // Labels of row and columns
-                            let columns = d3.nest().key(d => d.key[0]).entries(data);
-                            let rows = d3.nest().key(d => d.key[1]).entries(data);
-
-                        }
-                    },
-                }
-            }
-
             function render() {
                 return {
                     custom: data => {
+                        console.log(data)
                         $.setContent( self.element.querySelector( "#main" ), $.html(data, {
-                            height: self.size.height - 60
+                            height: self.size.height - 80
                         } ) );
                     },
                     highcharts: data => {
@@ -777,7 +491,7 @@
                         if ($.isObject(self.render.highcharts))
                             settings = $.convertObjectKeys(Object.assign(settings, self.render.highcharts));
 
-                        // console.log(settings) // @TODO remove debug print before live
+                        //console.log(settings) // @TODO remove debug print before live
                         if (!self.visualization) {
                             rerender = false;
                             const div = document.createElement( 'div' );
@@ -805,9 +519,6 @@
                         if (!data)
                             return;
 
-                        let filterAbility = data.filterAbility;
-                        if (!!filterAbility)
-                            null;
                         function setCell (dataset, key, link) {
                             if (!Array.isArray($.deepValue(dataset, key))) {
                                 if (link === "subject")
@@ -864,29 +575,45 @@
                             prev = prev.concat(
                                 { tag: "tr", inner: columns.order.map(td => $.format(self.templates.tables.td, {
                                     //tdInner: setCell(subject, columns[td].key, td) // without filterAbility @TODO remove before live
-                                        tdInner: [
-                                            {
-                                                tag: "span",
-                                                class: "cm_table_cell",
-                                                inner: setCell(subject, columns[td].key, td)
-                                            },
-                                            {
-                                                tag: "span",
-                                                class: "cm_table_cell_filter",
-                                                inner: [
-                                                    {
-                                                        tag: "span",
-                                                        class: "glyphicon glyphicon-zoom-in",
-                                                        onclick: ev => config().filter.add(value, __filter, true)
-                                                    },
-                                                    {
-                                                        tag: "span",
-                                                        class: "glyphicon glyphicon-zoom-out",
-                                                        onclick: ev => config().filter.add(value, __filter, false)
-                                                    }
-                                                ]
+                                        tdInner: function () {
+                                            if (!columns[td].filter)
+                                                return setCell(subject, columns[td].key, td);
+                                            let value, __path = columns[td].key;
+                                            if (columns[td].key.indexOf(",") > 1) {
+                                                if ($.deepValue(subject, columns[td].key.split(",")[0])) {
+                                                    value = $.deepValue(subject, columns[td].key.split(",")[0]);
+                                                    __path = columns[td].key.split(",")[0];
+                                                } else {
+                                                    value = $.deepValue(subject, columns[td].key.split(",")[1]);
+                                                    __path = columns[td].key.split(",")[1]
+                                                }
                                             }
-                                        ]
+                                            else
+                                                value = $.deepValue(subject, columns[td].key);
+                                            return [
+                                                {
+                                                    tag: "span",
+                                                    class: "cm_table_cell",
+                                                    inner: setCell(subject, columns[td].key, td)
+                                                },
+                                                {
+                                                    tag: "span",
+                                                    class: "cm_table_cell_filter",
+                                                    inner: [
+                                                        {
+                                                            tag: "span",
+                                                            class: "glyphicon glyphicon-zoom-in",
+                                                            onclick: () => config().filter.add(__path, value, true, columns[td].label)
+                                                        },
+                                                        {
+                                                            tag: "span",
+                                                            class: "glyphicon glyphicon-zoom-out",
+                                                            onclick: () => config().filter.add(__path, value, false, columns[td].label)
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        } ()
                                     }))},
                             );
                             return prev;
@@ -922,33 +649,6 @@
             }
 
             utils = {
-                checkProfile: {
-                    user: val => {
-                        if (!self.monitor.profile)
-                            return false;
-                        else if (self.monitor.profile.user !== val)
-                            return false;
-                        else
-                            return true;
-                    },
-                    name: val => {
-                        if (!self.monitor.profile)
-                            return false;
-                        else if (self.monitor.profile.name.length < 1 || self.monitor.profile.user !== val)
-                            return false;
-                        else
-                            return true;
-                    }
-                },
-                query: {
-                    date: {
-                        last: query => {
-                            let now = new Date();
-                            now.setMinutes(now.getMinutes() - self.monitor.range.value - now.getTimezoneOffset());
-                            return Object.assign(query, {created_at: {$gt: now.toISOString()}})
-                        }
-                    }
-                },
                 date: {
                     midnight: date => {
                         date = new Date(date);
@@ -961,33 +661,48 @@
             function config() {
                 return {
                     filter: {
-                        add: (value, path, boolean) => {
-                            if(!self.monitor.filter)
-                                self.monitor.filter = [ {key: [path.key], filter: [boolean, {[path.path]: value}]} ];
+                        add: (path, value, boolean, label) => {
+                            if(!self.filter)
+                                self.filter = { and: [ ] };
+
+                            let filter;
+                            if (boolean)
+                                filter = { "===" : [ { var : path }, value ] };
                             else
-                                self.monitor.filter.push({key: [path.key], filter: [boolean, {[path.path]: value}]});
+                                filter = { "!==" : [ { var : path }, value ] };
+                            self.filter.and.push(filter);
+
+                            if (!self.filterGUI)
+                                self.filterGUI = [{label: label, filter: filter}];
+                            else
+                                self.filterGUI.push({label: label, filter: filter});
+
                             config().filter.render();
                         },
-                        range: () => {},
                         remove: filter => {
-                            self.monitor.filter = self.monitor.filter.filter(arr => JSON.stringify(arr) !== JSON.stringify(filter));
+                            self.filter.and = self.filter.and.filter(arr => JSON.stringify(arr) !== JSON.stringify(filter.filter));
+                            self.filterGUI = self.filterGUI.filter(arr => JSON.stringify(arr) !== JSON.stringify(filter));
                             config().filter.render();
                         },
                         render: () => {
-                            let content = [
-                                { tag: "span", style: "font-size: smaller; display: block; font-weight: bold;", inner: "Filter" },
-                            ];
-                            self.monitor.filter.forEach(filter => {
-                                let subj = Object.values(filter.filter[1])[0];
+                            let boolean = {
+                                "===": true,
+                                "!==": false
+                            };
+                            let content = [ ];
+
+                            self.filterGUI.forEach(filter => {
                                 content.push($.format({
                                     tag: "span",
-                                    class: filter.filter[0] ? "btn-default badge" : "btn-danger badge",
+                                    class: boolean[Object.keys(filter.filter)[0]] ? "btn-default badge" : "btn-danger badge",
                                     style: "position: unset; margin-left: 7px",
-                                    inner: filter.key + ": " +  subj ,
+                                    inner: filter.label + ": " +  Object.values(filter.filter)[0][1] ,
                                     onclick: "%click%"
                                 }, { click: ev => config().filter.remove(filter)}));
                             });
-                            $.setContent( navContainer.filter, $.html(content));
+
+                            $.setContent( navContainer.filter.querySelector("#monitorFilterList"), $.html(content));
+
                             self.rerender();
                         }
                     }

@@ -30,7 +30,7 @@ span.cm_table_cell_filter span.glyphicon:hover {
 	display: none;
 }
 
-#toggle-sidebar:checked ~ .sidebar {
+#toggle-sidebar:checked ~ .cm-monitor-sidebar {
 	background-color: #fff;
 	min-width: 100%;
 	webkit-box-shadow: 19px 4px 9px 0 rgba(0, 0, 0, 0.1);
@@ -72,7 +72,7 @@ nav label.open {
     box-shadow: 19px 4px 9px 0 rgba(0, 0, 0, 0.1);
 }
 
-.sidebar {
+.cm-monitor-sidebar {
 	padding: 0;
 	overflow: hidden;
 	box-sizing: border-box;
