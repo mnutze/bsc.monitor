@@ -32,7 +32,7 @@ span.cm_table_cell_filter span.glyphicon:hover {
 
 #toggle-sidebar:checked ~ .cm-monitor-sidebar {
 	background-color: #fff;
-	min-width: 100%;
+	min-width: 65%;
 	webkit-box-shadow: 19px 4px 9px 0 rgba(0, 0, 0, 0.1);
     box-shadow: 19px 4px 9px 0 rgba(0, 0, 0, 0.1);
 }
