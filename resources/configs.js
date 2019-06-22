@@ -22,6 +22,100 @@ ccm.files[ 'configs.js' ] = {
         },
     },
 
+    courseActivities: {
+        process: [ "ccm.load", { url: "./assets/monitor.leader.js", type: "js" } ],
+        // initial configuration
+        groupBy: {
+            key: "event",
+            groupBy: {key: "parent.descr,parent.id"},
+        },
+        limit: 20,
+        render: { key: "highcharts", graph: "pie", highcharts: { "tooltip.shared": false ,"legend.enabled": false } },
+        subject: {},
+        // runtime configuration
+        range: { enabled: true, range: null },
+        stores: {
+            log: {
+                store: [ "ccm.store", { url: "wss://ccm2.inf.h-brs.de", name: "mnutze2s_activity_log" } ],
+                key: {
+                    $or: [
+                        { $and: [ { "parent.name": "youtube" }, { event:  "onStateChange" } ] },
+                        { $and: [ { "parent.name": "quiz" }, { event:  "finish" } ] },
+                        { $and: [ { "parent.name": "live_poll" }, { event:  "finish" } ] },
+                        { $and: [ { "parent.name": "feedback" }, { event:  "create" } ] },
+                        { $and: [ { "parent.name": "comment" }, { event:  "create" } ] },
+                        { $and: [ { "parent.name": "submit" }, { event:  "submit" } ] },
+                        { $and: [ { "parent.name": "cloze" }, { event:  "finish" } ] },
+                        //{ $and: [ { "parent.name": "regex" }, { event:  "regex" } ] },
+                        { $and: [ { "parent.name": "regex" }, { event:  "plus" } ] },
+                        { $and: [ { "parent.name": "regex" }, { event:  "eval" } ] },
+                        { $and: [ { "parent.name": "quick_decide" }, { event:  "click" } ] },
+                        { $and: [ { "parent.name": "quick_decide" }, { event:  "finish" } ] },
+                        { $and: [ { "parent.name": "fast_poll" }, { event:  "click" } ] },
+                        { $and: [ { "parent.name": "fast_poll" }, { event:  "finish" } ] },
+                        { $and: [ { "parent.name": "pdf_viewer" }, { event:  "goto" } ] },
+                        { $and: [ { "parent.name": "pdf_viewer" }, { event:  "next" } ] },
+                        { $and: [ { "parent.name": "pdf_viewer" }, { event:  "prev" } ] },
+                        { $and: [ { "parent.name": "kanban_board" }, { event:  "add" } ] },
+                        { $and: [ { "parent.name": "kanban_board" }, { event:  "drop" } ] },
+                        { $and: [ { "parent.name": "kanban_board" }, { event:  "del" } ] },
+                        { $and: [ { "parent.name": "kanban_card" }, { event:  "change" } ] },
+                    ]
+                },
+                onchangeFilter: {
+                    and: [
+                        { has: [ "user" ] },
+                        { or: [
+                            { and: [ { "===" : [ { var : "parent.name" }, "youtube" ] }, { "===" : [ { var : "event" }, "onStateChange" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "quiz" ] }, { "===" : [ { var : "event" }, "finish" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "live_poll" ] }, { "===" : [ { var : "event" }, "finish" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "feedback" ] }, { "===" : [ { var : "event" }, "create" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "comment" ] }, { "===" : [ { var : "event" }, "create" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "submit" ] }, { "===" : [ { var : "event" }, "submit" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "cloze" ] }, { "===" : [ { var : "event" }, "finish" ] } ] },
+                            //{ and: [ { "===" : [ { var : "parent.name" }, "regex" ] }, { "===" : [ { var : "event" }, "regex" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "regex" ] }, { "===" : [ { var : "event" }, "plus" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "regex" ] }, { "===" : [ { var : "event" }, "eval" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "quick_decide" ] }, { "===" : [ { var : "event" }, "click" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "quick_decide" ] }, { "===" : [ { var : "event" }, "finish" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "fast_poll" ] }, { "===" : [ { var : "event" }, "click" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "fast_poll" ] }, { "===" : [ { var : "event" }, "finish" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "pdf_viewer" ] }, { "===" : [ { var : "event" }, "goto" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "pdf_viewer" ] }, { "===" : [ { var : "event" }, "next" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "pdf_viewer" ] }, { "===" : [ { var : "event" }, "prev" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "kanban_board" ] }, { "===" : [ { var : "event" }, "add" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "kanban_board" ] }, { "===" : [ { var : "event" }, "drop" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "kanban_board" ] }, { "===" : [ { var : "event" }, "del" ] } ] },
+                            { and: [ { "===" : [ { var : "parent.name" }, "kanban_card" ] }, { "===" : [ { var : "event" }, "change" ] } ] },
+                        ] }
+                    ]
+                }
+            }
+        }
+    },
+    
+    getle10a6: {
+        process: [ "ccm.load", { url: "./assets/monitor.kanban.js", type: "js" } ],
+        render: { key: "highcharts" },
+        stores: {
+            log: {
+                store: [ "ccm.store", { url: "wss://ccm2.inf.h-brs.de", name: "mnutze2s_activity_log" } ],
+                key: { "parent.descr": "le10_a6" },
+                onchangeFilter: {}
+            }, // level-3 store
+            kanban_board: {
+                store: [ "ccm.store", { url: "wss://ccm2.inf.h-brs.de", name: "mnutze2s_kanban" } ],
+                key: {},
+                onchangeFilter: {}
+            },
+            kanban_cards: {
+                store: [ "ccm.store", { url: "wss://ccm2.inf.h-brs.de", name: "mnutze2s_cscl" } ],
+                key: {},
+                onchangeFilter: {}
+            }
+        },
+    },
+
     local: {
         css: [ "ccm.load", [
             { "url": "../../libs/css/delos.css" },

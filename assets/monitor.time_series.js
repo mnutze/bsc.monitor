@@ -53,13 +53,10 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
 
         return {
             "xAxis.labels.format": "{value}:00",
+            "subtitle.text": instance.range.range,
+            "subtitle.style": { fontWeight: "bold" },
             yAxis: [
-                { title: { text: "total-activity/h at weekday" }, plotLines: [{
-                            value: 0,
-                            label: { style: { fontWeight: "bold" },
-                                text: instance.range.range,
-                                align: 'right', x: -5, y: -(instance.size.height-125) }
-                        }] },
+                { title: { text: "total-activity/h at weekday" } },
                 //{ title: { text: "Events per h at week" }, opposite: true }
             ],
             series: [
@@ -132,19 +129,11 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
             "tooltip.shared": true,
             series: [].concat(avg, distinctCount, selected),
             "plotOptions.series.marker.enabled": false,
+            "subtitle.text": instance.range.range,
+            "subtitle.style": { fontWeight: "bold" },
             "xAxis.type": "datetime",
             yAxis: [
-                {
-                    title: { text: 'avg count \\ ' + instance.interval.current },
-                    plotLines: [
-                        {
-                            value: 0,
-                            label: { style: { fontWeight: "bold" },
-                                text: instance.range.range,
-                                align: 'right', x: -5, y: -(instance.size.height-125) }
-                        }
-                    ]
-                },
+                { title: { text: 'avg count \\ ' + instance.interval.current } },
                 { title: { text: "total count \\ " + instance.interval.current }, opposite: true }
             ]
         };

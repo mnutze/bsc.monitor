@@ -64,7 +64,6 @@
             templates: [ "ccm.load", { url: "resources/templates.js" } ],
 
             user: [ "ccm.instance", "https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.0.1.js", {
-                css: [],
                 realm: "hbrsinfpseudo",
                 logged_in: true
             } ],
@@ -92,11 +91,12 @@
                     }, false);
                 }
 
-                // make sure that "highstock.js" library is executed only once
-                //!window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.1/highstock.js" );
-
+                // make sure that "highcharts.js" library is executed only once
                 !window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highstock/6.0.3/js/modules/exporting.js" );
+                await self.ccm.load( "https://code.highcharts.com/modules/data.js" );
+                await self.ccm.load( "https://code.highcharts.com/modules/drilldown.js" );
+                //await self.ccm.load( "https://code.highcharts.com/modules/series-label.js" );
                 //await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/heatmap.js" );
 
                 // load jsonLogic only once
@@ -289,7 +289,11 @@
                 let data = self.data;
 
                 if (self.worker)
-                    self.worker.postMessage({data: data });
+                    self.worker.postMessage({
+                        data: data, 
+                        course: self.course ? self.course : undefined,
+                        incompleteLog: self.incompleteLog ? self.incompleteLog : false,
+                    });
                 else {
                     if (self.process)
                         data = self.process(data, self);
@@ -347,7 +351,11 @@
                 let data = self.data;
 
                 if (self.worker)
-                    self.worker.postMessage({data: data });
+                    self.worker.postMessage({
+                        data: data, 
+                        course: self.course ? self.course : undefined,
+                        incompleteLog: self.incompleteLog ? self.incompleteLog : false,
+                    });
                 else {
                     if (self.process)
                         data = self.process(data, self);
@@ -367,7 +375,7 @@
                             height: self.size.height - 50
                         } ) );
                     },
-                    highcharts: data => {
+                    highcharts: async data => {
                         if (self["no-rlt"] && !rerender)
                             return;
 
@@ -455,7 +463,22 @@
                                 backgroundColor: "#ffffff",
                                 width: self.size.width - 50,
                                 height: self.size.height - 50,
-                                marginTop: 50
+                                marginTop: 50,
+                                resetZoomButton:{
+                                    position:{
+                                        x:-10,
+                                        y: -40,
+                                    },
+                                    theme: {
+                                        'stroke-width': 1,
+                                        stroke: "#dadade",
+                                        r: 0,
+                                        padding: 5,
+                                        height: 12,
+                                        "font-size": "10px",
+                                        "zIndex": 6
+                                    }
+                                }
                             },
                             colors: self.helper.colors,
                             "exporting.buttons.contextButton.enabled": false,
@@ -482,17 +505,6 @@
                                             layout: 'horizontal'
                                         },
                                         xAxis: { "labels.step": 5 },
-                                        yAxis: {
-                                            labels: {
-                                                align: 'left',
-                                                x: -20,
-                                                y: -5
-                                            },
-                                            title: {
-                                                x: -15
-                                            }
-                                        },
-                                        subtitle: { text: null },
                                         credits: { enabled: false }
                                     }
                                 }]
@@ -509,8 +521,8 @@
 
                         if ($.isObject(self.render.highcharts))
                             settings = $.convertObjectKeys(Object.assign(settings, self.render.highcharts));
-
-                        //console.log(settings) // @TODO remove debug print before live
+                        
+                        //console.log(settings); // @TODO remove debug print before live
                         if (!self.visualization) {
                             rerender = false;
                             const div = document.createElement( 'div' );
