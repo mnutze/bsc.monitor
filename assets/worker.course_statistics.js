@@ -118,7 +118,10 @@ self.addEventListener("message", function (event) {
                 last: 0
             },
             avg: 0
-        }
+        },
+        mostFrequent: {
+            component: {}
+        },
     };
 
     let domain = rangeFunc(log);
@@ -135,7 +138,6 @@ self.addEventListener("message", function (event) {
 
             if (moment(curr.created_at) > currentWeek[0] && moment(curr.created_at) < currentWeek[1] && !stats.online.weekly.current.includes(curr.user.user))
                 stats.online.weekly.current.push(curr.user.user);
-
 
             // general activities
             if (jsonLogic.apply(rules.action, curr))
@@ -157,6 +159,12 @@ self.addEventListener("message", function (event) {
             if (moment(curr.created_at) > currentWeek[0] && moment(curr.created_at) < currentWeek[1] && curr.parent.name === "submit")
                 stats.exercises.weekly.current += 1;
 
+            // most frequent
+            if (!stats.mostFrequent.component[curr.parent.name] && jsonLogic.apply(rules.action, curr))
+                stats.mostFrequent.component[curr.parent.name] = 1;
+            else if (jsonLogic.apply(rules.action, curr))
+                stats.mostFrequent.component[curr.parent.name] += 1;
+
             return prev;
         }, { learners: { weekly: { last: [], current: [] } } });
     });
@@ -175,34 +183,34 @@ self.addEventListener("message", function (event) {
             },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Total"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: "&#8721; " + stats.online.sum.length
             },
             { style: "clear: both;" },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Current Week"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: stats.online.weekly.current.length
             },
             { style: "clear: both;" },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Last Week"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: stats.online.weekly.last.length
             },
             { style: "clear: both;" },
@@ -213,45 +221,45 @@ self.addEventListener("message", function (event) {
             },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Total"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: "&#8721; " + stats.activities.sum
             },
             { style: "clear: both;" },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Current Week"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: stats.activities.weekly.current
             },
             { style: "clear: both;" },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Last Week"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: stats.activities.weekly.last
             },
             { style: "clear: both;" },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Week Avg"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: "&Oslash; " + stats.activities.avg
             },
             { style: "clear: both;" },
@@ -262,46 +270,77 @@ self.addEventListener("message", function (event) {
             },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Total"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: "&#8721; " + stats.exercises.sum
             },
             { style: "clear: both;" },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Current Week"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: stats.exercises.weekly.current
             },
             { style: "clear: both;" },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Last Week"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: stats.exercises.weekly.last
             },
             { style: "clear: both;" },
             {
                 tag: "span",
-                class: "small ilFloatLeft",
+                class: "cm-small ilFloatLeft",
                 inner: "Week Avg"
             },
             {
                 tag: "span",
-                class: "small ilFloatRight",
+                class: "cm-small ilFloatRight",
                 inner: "&Oslash; " + stats.exercises.avg
+            },
+            { style: "clear: both;" },
+            {
+                tag: "h3",
+                class: "ilBlockHeader show",
+                inner: "Most frequent"
+            },
+            {
+                tag: "span",
+                class: "cm-small ilFloatLeft",
+                inner: "Activity"
+            },
+            {
+                tag: "span",
+                class: "cm-small ilFloatRight",
+                inner: "submit blabliblub"
+            },
+            { style: "clear: both;" },
+            {
+                tag: "span",
+                class: "cm-small ilFloatLeft",
+                inner: "Component"
+            },
+            {
+                tag: "span",
+                class: "cm-small ilFloatRight",
+                inner: Object.entries(stats.mostFrequent.component).reduce((prev, curr) => {
+                    if (curr[1] > prev[1])
+                        prev = [curr[0], curr[1]]
+                    return prev;
+                }, ["", 0])[0]
             },
             { style: "clear: both;" },
         ]

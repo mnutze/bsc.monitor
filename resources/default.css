@@ -3,7 +3,7 @@
 	height: 100%;
 }
 
-.cm_table_cell {
+.cm_table_cell, .cm-small {
 	font-size: 80%;
 }
 

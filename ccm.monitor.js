@@ -43,7 +43,13 @@
                             tag: "nav",
                             id: "optionsControl"
                         },
-                        { id: "main", style: "" }
+                        {
+                            id: "main",
+                            inner: {
+                                id: "ccm_keyframe",
+                                inner: "%loading%"
+                            }
+                        }
                     ]
                 }
             },
@@ -57,12 +63,8 @@
 
             templates: [ "ccm.load", { url: "resources/templates.js" } ],
 
-            js : [ "ccm.load", [
-                { url: "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js" },
-                { url: "https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.13/moment-timezone-with-data-2012-2022.min.js" },
-            ] ],
-
             user: [ "ccm.instance", "https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.0.1.js", {
+                css: [],
                 realm: "hbrsinfpseudo",
                 logged_in: true
             } ],
@@ -78,8 +80,17 @@
 
             this.init = async () => {
                 
-                if (self.worker)
+                if (self.worker) {
                     self.worker = new Worker(self.worker);
+                    self.worker.addEventListener('message', function(event) {
+                        let data = event.data;
+                        if (self["no-rlt"] && !rerender)
+                            return;
+
+                        if (data)
+                            render()[self.render.key](data);
+                    }, false);
+                }
 
                 // make sure that "highstock.js" library is executed only once
                 //!window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.1/highstock.js" );
@@ -88,6 +99,16 @@
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highstock/6.0.3/js/modules/exporting.js" );
                 //await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/heatmap.js" );
 
+                // load jsonLogic only once
+                !window.jsonLogic && await self.ccm.load("https://mnutze.github.io/bsc.monitoring-courses/libs/js/logic.js");
+
+                // make sure that "d3.js" library is executed only once
+                !window.d3 && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.min.js" );
+
+                // make sure that "d3.js" library is executed only once
+                !window.moment && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js" );
+                await self.ccm.load("https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.13/moment-timezone-with-data-2012-2022.min.js");
+
                 Highcharts.dateFormats = {
                     W: function (timestamp) {
                         return moment(timestamp).isoWeek();
@@ -95,15 +116,6 @@
                 };
 
                 Highcharts.setOptions( { time: { timezone: 'Europe/Berlin' } } );
-
-                // load jsonLogic only once
-                !window.jsonLogic && await self.ccm.load("https://mnutze.github.io/bsc.monitoring-courses/libs/js/logic.js");
-
-                // make sure that "d3.js" library is executed only once
-                !window.d3 && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.min.js" );
-
-                // make sure that "pako.js" library is executed only once
-                !window.pako && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.10/pako.min.js" );
 
                 let has = function(key) {
                     return !!$.deepValue(this, key);
@@ -166,12 +178,19 @@
             this.start = async () => {
 
                 // put main HTML structure into frontend
-                $.setContent( self.element, $.html( self.html.main ) );
+                $.setContent( self.element, $.html( self.html.main, {
+                    loading: $.loading()
+                } ) );
 
                 self.element.style = "height: inherit;";
                 if (!self.size) {
                     self.element.style = "height: 100vh;";
                     self.size = self.element.getBoundingClientRect();
+                } else {
+                    self.element.style = $.format("height: %height%px; width: %width%px", {
+                        height: self.size.height - 50,
+                        width: self.size.width - 30
+                    });
                 }
 
                 // if dashboard widget -> validate initial monitor data if
@@ -269,18 +288,8 @@
 
                 let data = self.data;
 
-                if (self.worker) {
-                    self.worker.addEventListener('message', function(event) {
-                        data = event.data;
-
-                        rerender = true;
-
-                        if (data)
-                            render()[self.render.key](data);
-
-                    }, false);
+                if (self.worker)
                     self.worker.postMessage({data: data });
-                }
                 else {
                     if (self.process)
                         data = self.process(data, self);
@@ -291,11 +300,6 @@
                         render()[self.render.key](data);
                 }
 
-            };
-
-            this.resize = async size => {
-                self.monitor.size = size;
-                await self.rerender();
             };
 
             this.update = async (dataset, source, flag) => await update(dataset, self.sources[source]);
@@ -342,18 +346,8 @@
 
                 let data = self.data;
 
-                if (self.worker) {
-                    self.worker.addEventListener('message', function(event) {
-                        data = event.data;
-                        if (self["no-rlt"] && !rerender)
-                            return;
-
-                        if (data)
-                            render()[self.render.key](data);
-
-                    }, false);
+                if (self.worker)
                     self.worker.postMessage({data: data });
-                }
                 else {
                     if (self.process)
                         data = self.process(data, self);
@@ -369,9 +363,8 @@
             function render() {
                 return {
                     custom: data => {
-
                         $.setContent( self.element.querySelector( "#main" ), $.html(data, {
-                            height: self.size.height - 80
+                            height: self.size.height - 50
                         } ) );
                     },
                     highcharts: data => {
@@ -734,16 +727,6 @@
                     }
                 }
             }
-
-            /** @HOWTO compress and uncompress strings with pako */
-            function compress_data (json_object) {
-                let uncompressed_string = JSON.stringify(json_object); // pako gets a string
-                let compressed_string = pako.gzip(uncompressed_string, { to: 'string' });
-                uncompressed_string = pako.ungzip(compressed_string, { to: 'string' });
-                json_object = JSON.parse(uncompressed_string);
-                return json_object;
-            }
-
         }
 
     };
