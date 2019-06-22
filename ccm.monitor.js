@@ -77,6 +77,9 @@
             let timeSlices, timeRanges, colorList;
 
             this.init = async () => {
+                
+                if (self.worker)
+                    self.worker = new Worker(self.worker);
 
                 // make sure that "highstock.js" library is executed only once
                 //!window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.1/highstock.js" );
@@ -166,8 +169,10 @@
                 $.setContent( self.element, $.html( self.html.main ) );
 
                 self.element.style = "height: inherit;";
-                if (!self.size)
+                if (!self.size) {
+                    self.element.style = "height: 100vh;";
                     self.size = self.element.getBoundingClientRect();
+                }
 
                 // if dashboard widget -> validate initial monitor data if
                 if (self.sources) {
@@ -201,12 +206,6 @@
 
                     self.element.querySelector("#optionsControl").querySelector("#close-options").addEventListener("click", ev => {
                         self.element.querySelector("#toggle-sidebar").checked = false;
-                    });
-
-                    return;
-                    self.element.querySelector("#optionsControl").querySelector("#apply-options").addEventListener("click", ev => {
-                        self.element.querySelector("#toggle-sidebar").checked = false;
-                        self.rerender();
                     });
                 }
             };
@@ -270,15 +269,28 @@
 
                 let data = self.data;
 
-                if (self.process)
-                    data = self.process(data, self);
-                else if (self.monitor.process.agg.length > 0)
-                    self.monitor.process.agg.forEach(func => data = $.deepValue(aggregate(data), func)());
+                if (self.worker) {
+                    self.worker.addEventListener('message', function(event) {
+                        data = event.data;
 
-                rerender = true;
+                        rerender = true;
 
-                if (data)
-                    render()[self.render.key](data);
+                        if (data)
+                            render()[self.render.key](data);
+
+                    }, false);
+                    self.worker.postMessage({data: data });
+                }
+                else {
+                    if (self.process)
+                        data = self.process(data, self);
+
+                    rerender = true;
+
+                    if (data)
+                        render()[self.render.key](data);
+                }
+
             };
 
             this.resize = async size => {
@@ -330,20 +342,34 @@
 
                 let data = self.data;
 
-                if (self.process)
-                    data = self.process(data, self);
+                if (self.worker) {
+                    self.worker.addEventListener('message', function(event) {
+                        data = event.data;
+                        if (self["no-rlt"] && !rerender)
+                            return;
 
-                if (self["no-rlt"] && !rerender)
+                        if (data)
+                            render()[self.render.key](data);
+
+                    }, false);
+                    self.worker.postMessage({data: data });
+                }
+                else {
+                    if (self.process)
+                        data = self.process(data, self);
+
+                    if (self["no-rlt"] && !rerender)
                         return;
 
-                if (data)
-                    render()[self.render.key](data);
+                    if (data)
+                        render()[self.render.key](data);
+                }
             }
 
             function render() {
                 return {
                     custom: data => {
-                        console.log(data)
+
                         $.setContent( self.element.querySelector( "#main" ), $.html(data, {
                             height: self.size.height - 80
                         } ) );

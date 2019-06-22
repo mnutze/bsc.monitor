@@ -21,14 +21,16 @@ ccm.files["monitor.latest.js"] = function (data, instance) {
                 instance.filter.and.push(filter);
         });
 
-    // filter data older than "value" minutes
-    data = helper.datetime.gt(data, instance.range.value);
+    // filter data older than "value" minutes @TODO depr
+    //data = helper.datetime.gt(data, instance.range.value);
 
     // filter data against rules
     data = helper.filterData(data, instance.filter);
 
     // reverse data, so get newest data first
     data = data.reverse();
+
+    data = data.slice(0, 50);
 
     return { aggregated: data, filterAbility: true };
 };

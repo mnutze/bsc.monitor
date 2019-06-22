@@ -65,8 +65,9 @@ ccm.files["widget.course_statistics.js"] = function (data, instance) {
 
     let domain = helper.datetime.range(log);
     let histogram = helper.datetime.histogram(log, domain, helper.datetime.mondayWeek(), 1);
-    histogram.forEach(week => {
+    histogram.forEach((week, index) => {
         let list = week.reduce((prev, curr) => {
+            /*
             // learners
             if (!stats.online.sum.includes(curr.user.user))
                 stats.online.sum.push(curr.user.user);
@@ -76,6 +77,7 @@ ccm.files["widget.course_statistics.js"] = function (data, instance) {
 
             if (moment(curr.created_at) > currentWeek[0] && moment(curr.created_at) < currentWeek[1] && !stats.online.weekly.current.includes(curr.user.user))
                 stats.online.weekly.current.push(curr.user.user);
+            */
 
             // general activities
             if (jsonLogic.apply(rules.action, curr))
