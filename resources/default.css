@@ -106,8 +106,7 @@ nav label.open {
   width: 150px;
   height: 150px;
   vertical-align: text-bottom;
-  background-color: currentColor;
-  // stylelint-disable-next-line property-blacklist
+  background-color: #d62728;
   border-radius: 50%;
   opacity: 0;
   animation: spinner-grow .75s linear infinite;
