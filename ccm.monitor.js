@@ -25,7 +25,7 @@
             css: {
                 default: [ "ccm.load", [
                     { url: "https://mnutze.github.io/bsc.monitor/resources/default.css" },
-                    { url: "./resources/cm-highcharts.css" }
+                    { url: "https://mnutze.github.io/bsc.monitor/resources/cm-highcharts.css" }
                 ] ],
                 extern: [ "ccm.load", [
                     { url: "https://mnutze.github.io/bsc.monitoring-courses/libs/css/delos.css" },
@@ -61,7 +61,7 @@
                 // local: undefined, // level-2 store
             },
 
-            templates: [ "ccm.load", { url: "resources/templates.js" } ],
+            templates: [ "ccm.load", { url: "https://mnutze.github.io/bsc.monitor/resources/templates.js" } ],
 
             user: [ "ccm.instance", "https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.0.1.js", {
                 realm: "hbrsinfpseudo",
