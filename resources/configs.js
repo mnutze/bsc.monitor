@@ -99,7 +99,7 @@ ccm.files[ 'configs.js' ] = {
         render: { key: "highcharts" },
         stores: {
             log: {
-                store: [ "ccm.store", { url: "wss://ccm2.inf.h-brs.de", name: "mnutze2s_activity_log" } ],
+                store: [ "ccm.store", { url: "https://ccm2.inf.h-brs.de", name: "mnutze2s_activity_log" } ],
                 key: { "parent.descr": "le10_a6" },
                 onchangeFilter: {}
             }, // level-3 store

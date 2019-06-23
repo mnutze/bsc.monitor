@@ -290,9 +290,13 @@
 
                 if (self.worker)
                     self.worker.postMessage({
-                        data: data, 
+                        colors: self.helper.colors,
                         course: self.course ? self.course : undefined,
+                        data: data,
                         incompleteLog: self.incompleteLog ? self.incompleteLog : false,
+                        interval: self.interval ? self.interval : undefined,
+                        range: self.range ? self.range : undefined,
+                        subject: self.subject ? self.subject : undefined,
                     });
                 else {
                     if (self.process)
@@ -352,9 +356,13 @@
 
                 if (self.worker)
                     self.worker.postMessage({
-                        data: data, 
+                        colors: self.helper.colors,
                         course: self.course ? self.course : undefined,
+                        data: data,
                         incompleteLog: self.incompleteLog ? self.incompleteLog : false,
+                        interval: self.interval ? self.interval : undefined,
+                        range: self.range ? self.range : undefined,
+                        subject: self.subject ? self.subject : undefined,
                     });
                 else {
                     if (self.process)
@@ -426,7 +434,7 @@
                                     y: buttonsSettings.y.pop(),
                                     className: "cm-hc-custom-range",
                                     theme: buttonsSettings.theme,
-                                    text: "Range",
+                                    text: self.range.range === "lessons" && self.course && self.course.lessons ? "Lesson" : "Range",
                                     menuItems: function () {
                                         // Calendar weeks
                                         if (self.range.range === "weeks") {
@@ -439,6 +447,17 @@
                                                 }
                                             }));
                                         }
+                                        if (self.range.range === "lessons" && self.course && self.course.lessons) {
+                                            return Object.keys(self.course.lessons).map((lesson, id) => ({
+                                                text: "" + (id+1),
+                                                theme: { "font-size": "8px" },
+                                                onclick: (ev) => {
+                                                    self.range.current = { [lesson]: self.course.lessons[lesson] };
+                                                    self.rerender()
+                                                }
+                                            }));
+                                        }
+
                                         let ranges = [];
                                         timeRanges.forEach((value, key) => {
                                             ranges.push({

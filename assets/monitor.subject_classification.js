@@ -42,7 +42,7 @@ ccm.files["monitor.subject_classification.js"] = function (data, instance) {
                 instance.range.current[1] <= histogram.x1)
                 weekSelector = id;
         });
-    let classificationLegend = "Q1: Heading | Q2: Lowering | Q3: At Risk | Q4: Improving"
+    let classificationLegend = "Q1: Heading | Q2: Lowering | Q3: At Risk | Q4: Improving";
 
     let series = subjects.map(subject => ({
         name: checkName(subject.key) ? instance.teams ? "Your Team" : "You" : subject.key,
@@ -54,8 +54,13 @@ ccm.files["monitor.subject_classification.js"] = function (data, instance) {
     let maxY = Math.max(...series.map(point => point.data[0][1]));
     let maxX = Math.max(...series.map(point => point.data[0][0]));
 
+    let weekLabel = instance.range.current ?
+        "Week " + moment(instance.range.current.x0).isoWeek() + " - " + moment(instance.range.current.x0).format('YYYY') :
+        "Week " + moment(instance.range.values[weekSelector].x0).isoWeek() + " - " + moment(instance.range.values[weekSelector].x0).format('YYYY');
+
     return {
         "chart.type": "scatter",
+        "subtitle.text": "<b>" + weekLabel + "</b><br/>" + classificationLegend,
         xAxis: {
             gridLineWidth: 0,
             title: { enabled: true, text: 'Activities - last week', offset: 25 },

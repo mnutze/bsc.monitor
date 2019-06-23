@@ -13,13 +13,32 @@ ccm.files["monitor.leader.js"] = function (data, instance) {
         data = helper.teams(data);
     }
 
-    if (instance.range.range === null) {
+    if (instance.range.range === "lessons") {
+        let lessons = instance.course.lessons
+        if (!instance.range.current) {
+            let today = new Date();
+            instance.range.current = Object.entries(lessons)
+                .filter(lesson => (today > new Date(lesson[1].start) && (today < new Date(lesson[1].deadline))))[0];
+            if (instance.range.current.length < 1)
+                instance.range.current = lessons[Object.keys(lessons)[Object.keys(lessons).length-1]];
+            if (Array.isArray(instance.range.current))
+                instance.range.current = { [instance.range.current[0]]: instance.range.current[1] };
+        }
+        let filter = Object.keys(instance.range.current[Object.keys(instance.range.current)[0]].content).reduce((prev, curr) => {
+            prev.push({ "===": [ { var : "parent.descr" }, curr ] });
+            prev.push({ "===": [ { var : "parent.id" }, curr ] });
+            return prev;
+        }, []);
+        filter = { or: filter };
+        data = data.filter(entry => jsonLogic.apply(filter, entry));
+    }
+    else if (instance.range.range === null) {
         data = helper.filterData(data, { range: helper.timeRanges.get("last 7d")(new Date) } );
         instance.range.range = "last 7d";
     } else
         data = helper.filterData(data, { range: helper.timeRanges.get(instance.range.range)(new Date) } );
 
-    let subtitle = instance.range.range;
+    let subtitle;
 
     if (instance.subject && instance.subject.values && instance.subject.values.length > 0 && Array.isArray(instance.subject.values))
         data = helper.filterData(data, {
@@ -74,7 +93,7 @@ ccm.files["monitor.leader.js"] = function (data, instance) {
                         $.deepValue(curr, groupBySecondary.split(",")[0]) :
                         $.deepValue(curr, groupBySecondary.split(",")[1]);
                 else
-                    _secKey =  $.deepValue(curr, groupBySecondary)
+                    _secKey =  $.deepValue(curr, groupBySecondary);
                 if (!y.includes(_secKey))
                     y.push(_secKey);
                 if (!prev.has(_secKey))
@@ -93,12 +112,17 @@ ccm.files["monitor.leader.js"] = function (data, instance) {
     else
         x = Array.from(data.keys()).map(key => instance.teams.get().teams.filter(team => team.key === key)[0].name);
 
+    if (instance.range.range === "lessons")
+        subtitle = instance.range.current[Object.keys(instance.range.current)[0]].label;
+    else
+        subtitle = instance.range.range;
+
     let settings = {
         "xAxis.categories": x,
         "legend.reversed": true,
         "plotOptions.series.stacking": "normal",
         "yAxis.min": 0,
-        "subtitle.text": instance.range.range,
+        "subtitle.text": subtitle,
         "subtitle.style": { fontWeight: "bold" },
         "tooltip.shared": true,
         "chart.type": chart,
@@ -139,9 +163,12 @@ ccm.files["monitor.leader.js"] = function (data, instance) {
                 data.forEach((value, key)=>settings.series[0].data.push(value.length));
                 */
             } else {
+                function sum (prev, curr) {
+                    return prev + Array.from(curr[1]).reduce((p,c)=> p + c[1].length, 0);
+                }
                 settings = {
                     "chart.type": "pie",
-                    "subtitle.text": instance.range.range,
+                    "subtitle.text": subtitle,
                     "subtitle.style": { fontWeight: "bold" },
                     "legend.enabled": true,
                     plotOptions: {
@@ -161,10 +188,9 @@ ccm.files["monitor.leader.js"] = function (data, instance) {
                             size: '200%'
                         }
                     },
-
                     tooltip: {
                         headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
-                        pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y}x<br/>'
+                        pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f} %<br/>'
                     },
                 };
                 settings.series = [{
@@ -174,8 +200,10 @@ ccm.files["monitor.leader.js"] = function (data, instance) {
                         name: element[0],
                         type: 'pie',
                         innerSize: '50%',
+                        tooltip: { valueDecimals: 2 },
                         drilldown: element[0],
-                        y: Array.from(element[1]).reduce((prev, curr) => prev + curr[1].length, 0)
+                        y: Array.from(element[1])
+                            .reduce((prev, curr) => prev + curr[1].length, 0) / Array.from(data).reduce(sum, 0) * 100
                     }))
                 }];
                 settings.drilldown = {
@@ -198,7 +226,11 @@ ccm.files["monitor.leader.js"] = function (data, instance) {
                         id: element[0],
                         type: 'pie',
                         innerSize: '50%',
-                        data: Array.from(element[1]).map(drilled => [drilled[0], drilled[1].length])
+                        tooltip: { valueDecimals: 2 },
+                        data: Array.from(element[1]).map(drilled => [
+                            drilled[0],
+                            drilled[1].length / Array.from(element[1]).reduce((p,c)=> p + c[1].length, 0) * 100
+                        ])
                     }))
                 };
                 return settings;
