@@ -78,7 +78,7 @@ ccm.files["monitor.learners.js"] = function (data, instance) {
     },{});
 
     // @TODO TABLE  | user | last online | online profile | last action | action count | action profile | exercise points
-    let interval = helper.timeSlices().get("1h");
+    let interval = helper.timeSlices.get("1h");
     Object.entries(data).forEach(dataset => {
         data[dataset[0]].profile.online = helper.datetime.histogram(dataset[1].profile.online, domain, ...interval);
         data[dataset[0]].profile.action = helper.datetime.histogram(dataset[1].profile.action, domain, ...interval);

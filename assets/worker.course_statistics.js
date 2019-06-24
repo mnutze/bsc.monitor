@@ -179,23 +179,23 @@ self.addEventListener("message", function (event) {
             {
                 tag: "h3",
                 class: "ilBlockHeader show",
-                inner: "Learners"
+                inner: "Studenten"
             },
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Total"
+                inner: "&#8721; aller Kurs-Teilnehmer"
             },
             {
                 tag: "span",
                 class: "cm-small ilFloatRight",
-                inner: "&#8721; " + stats.online.sum.length
+                inner: stats.online.sum.length
             },
             { style: "clear: both;" },
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Current Week"
+                inner: "Aktuelle Woche"
             },
             {
                 tag: "span",
@@ -206,7 +206,7 @@ self.addEventListener("message", function (event) {
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Last Week"
+                inner: "Letzte Woche"
             },
             {
                 tag: "span",
@@ -217,23 +217,23 @@ self.addEventListener("message", function (event) {
             {
                 tag: "h3",
                 class: "ilBlockHeader show",
-                inner: "Activities"
+                inner: "Aktivitäten"
             },
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Total"
+                inner: "&#8721; aller Aktivitäten"
             },
             {
                 tag: "span",
                 class: "cm-small ilFloatRight",
-                inner: "&#8721; " + stats.activities.sum
+                inner: stats.activities.sum
             },
             { style: "clear: both;" },
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Current Week"
+                inner: "Aktuelle Woche"
             },
             {
                 tag: "span",
@@ -244,7 +244,7 @@ self.addEventListener("message", function (event) {
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Last Week"
+                inner: "Letzte Woche"
             },
             {
                 tag: "span",
@@ -255,34 +255,34 @@ self.addEventListener("message", function (event) {
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Week Avg"
+                inner: "Durchschnitt/Woche"
             },
             {
                 tag: "span",
                 class: "cm-small ilFloatRight",
-                inner: "&Oslash; " + stats.activities.avg
+                inner: "&Oslash; " + stats.activities.avg.toFixed(2)
             },
             { style: "clear: both;" },
             {
                 tag: "h3",
                 class: "ilBlockHeader show",
-                inner: "Exercise Submits"
+                inner: "Übungen bearbeitet"
             },
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Total"
+                inner: "&#8721; aller Bearbeitungsvorgänge"
             },
             {
                 tag: "span",
                 class: "cm-small ilFloatRight",
-                inner: "&#8721; " + stats.exercises.sum
+                inner: stats.exercises.sum
             },
             { style: "clear: both;" },
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Current Week"
+                inner: "Aktuelle Woche"
             },
             {
                 tag: "span",
@@ -293,7 +293,7 @@ self.addEventListener("message", function (event) {
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Last Week"
+                inner: "Letzte Woche"
             },
             {
                 tag: "span",
@@ -304,23 +304,23 @@ self.addEventListener("message", function (event) {
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Week Avg"
+                inner: "Durchschnitt/Woche"
             },
             {
                 tag: "span",
                 class: "cm-small ilFloatRight",
-                inner: "&Oslash; " + stats.exercises.avg
+                inner: "&Oslash; " + stats.exercises.avg.toFixed(2)
             },
             { style: "clear: both;" },
             {
                 tag: "h3",
                 class: "ilBlockHeader show",
-                inner: "Most frequent"
+                inner: "Häufigste/r ..."
             },
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Activity"
+                inner: "Aktivität"
             },
             {
                 tag: "span",
@@ -331,7 +331,7 @@ self.addEventListener("message", function (event) {
             {
                 tag: "span",
                 class: "cm-small ilFloatLeft",
-                inner: "Component"
+                inner: "Ressourcen-Typ"
             },
             {
                 tag: "span",

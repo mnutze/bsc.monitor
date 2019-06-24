@@ -63,6 +63,7 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
                 //{type: "column", dashStyle: 'shortdot', yAxis: 1, color: "#ccc", name: "week", data: week},
                 ...aggregated
             ], "plotOptions.series.marker.enabled": false,
+            "tooltip.headerFormat": "<span style=\"font-size:11px; font-weight: bold;\">{point.key}:00</span><br>",
             tooltip: { enabled: true, shared: true}
         };
     }
@@ -73,7 +74,7 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
         } else
             data = helper.filterData(data, { range: helper.timeRanges.get(instance.range.range)(new Date) } );
 
-        let interval = [helper.timeSlices().get(instance.interval.current)[0], helper.timeSlices().get(instance.interval.current)[1]];
+        let interval = [helper.timeSlices.get(instance.interval.current)[0], helper.timeSlices.get(instance.interval.current)[1]];
         let subject = instance.subject.key;
         let viewOptions = instance.subject.values;
         let domain = helper.datetime.range(data);

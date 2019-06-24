@@ -42,12 +42,13 @@ ccm.files["monitor.subject_classification.js"] = function (data, instance) {
                 instance.range.current[1] <= histogram.x1)
                 weekSelector = id;
         });
-    let classificationLegend = "Q1: Heading | Q2: Lowering | Q3: At Risk | Q4: Improving";
+    let classificationLegend = "Q1: hervorragend | Q2: absteigend | Q3: zu wenig | Q4: aufstrebend";
 
     let series = subjects.map(subject => ({
-        name: checkName(subject.key) ? instance.teams ? "Your Team" : "You" : subject.key,
+        name: checkName(subject.key) ? instance.teams ? "Dein Team" : "Du" : subject.key,
         color: checkSubject(subject.key) ? helper.colors[6] : "#000",
         marker: checkSubject(subject.key) ? { radius: 4 } : {},
+        zIndex: checkName(subject.key) ? instance.teams ? 9999 : 9999 : undefined,
         data: [[subject.histograms[weekSelector].length, subject.histograms.slice(0,weekSelector+1).reduce((prev, curr) => curr.length + prev, 0)/weekSelector+1]]
     }));
 
@@ -55,8 +56,8 @@ ccm.files["monitor.subject_classification.js"] = function (data, instance) {
     let maxX = Math.max(...series.map(point => point.data[0][0]));
 
     let weekLabel = instance.range.current ?
-        "Week " + moment(instance.range.current.x0).isoWeek() + " - " + moment(instance.range.current.x0).format('YYYY') :
-        "Week " + moment(instance.range.values[weekSelector].x0).isoWeek() + " - " + moment(instance.range.values[weekSelector].x0).format('YYYY');
+        "KW " + moment(instance.range.current.x0).isoWeek() + " - " + moment(instance.range.current.x0).format('YYYY') :
+        "KW " + moment(instance.range.values[weekSelector].x0).isoWeek() + " - " + moment(instance.range.values[weekSelector].x0).format('YYYY');
 
     return {
         "chart.type": "scatter",

@@ -22,7 +22,7 @@ ccm.files["monitor.accumulated_activities.js"] = function (data, instance) {
                 instance.filter.and.push(filter);
         });
 
-    let interval = helper.timeSlices().get("1w");
+    let interval = helper.timeSlices.get("1w");
     let domain = helper.datetime.range(data);
 
     // filter data against rules

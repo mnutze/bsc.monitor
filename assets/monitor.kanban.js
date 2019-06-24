@@ -37,7 +37,7 @@ ccm.files["monitor.kanban.js"] = function (data, instance) {
                 {"!==" : [ { var : "event" }, "drag" ] }
                 ] }, dataset));
 
-            let interval = helper.timeSlices().get("1h");
+            let interval = helper.timeSlices.get("1h");
             let domain = helper.datetime.range(data.log);
 
             let lanes = {};

@@ -44,7 +44,7 @@ ccm.files["monitor.leader.js"] = function (data, instance) {
         data = helper.filterData(data, {
             or: instance.subject.values.map(value => ({
                 "===" : [
-                    { var : instance.subject.key }, instance.subject.teams ? instance.teams.get().teams.filter(team => team.name === value)[0].key : value
+                    { var : instance.subject.key }, instance.subject.teams ? Object.values(instance.course.teams).filter(team => team.name === value)[0].key : value
                 ]
             }) )
         } );
@@ -106,11 +106,13 @@ ccm.files["monitor.leader.js"] = function (data, instance) {
         });
 
     let x;
-
-    if (!instance.subject.teams)
+console.log(instance.course)
+    if (!instance.subject)
+        x = [...data.keys()];
+    else if (!instance.subject.teams)
          x = [...data.keys()];
     else
-        x = Array.from(data.keys()).map(key => instance.teams.get().teams.filter(team => team.key === key)[0].name);
+        x = Array.from(data.keys()).map(key => Object.values(instance.course.teams).filter(team => team.key === key)[0].name);
 
     if (instance.range.range === "lessons")
         subtitle = instance.range.current[Object.keys(instance.range.current)[0]].label;

@@ -72,10 +72,7 @@
         Instance: function () {
 
             const self = this;
-            let $, navContainer, utils, rerender = true;
-
-            // global variables
-            let timeSlices, timeRanges, colorList;
+            let $, navContainer, rerender = true;
 
             this.init = async () => {
                 
@@ -93,9 +90,10 @@
 
                 // make sure that "highcharts.js" library is executed only once
                 !window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts.js" );
-                await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highstock/6.0.3/js/modules/exporting.js" );
-                await self.ccm.load( "https://code.highcharts.com/modules/data.js" );
-                await self.ccm.load( "https://code.highcharts.com/modules/drilldown.js" );
+                await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/exporting.js" );
+                await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/data.js" );
+                await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/drilldown.js" );
+                await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts-more.js");
                 //await self.ccm.load( "https://code.highcharts.com/modules/series-label.js" );
                 //await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/heatmap.js" );
 
@@ -114,41 +112,13 @@
                         return moment(timestamp).isoWeek();
                     }
                 };
-
                 Highcharts.setOptions( { time: { timezone: 'Europe/Berlin' } } );
 
-                let has = function(key) {
-                    return !!$.deepValue(this, key);
-                };
-
-                let range = function(start, end) {
-                    return (new Date(this.created_at) > start && new Date(this.created_at) < end)
-                };
+                function has (key) { return !!$.deepValue(this, key); }
+                function range (start, end) { return (new Date(this.created_at) > start && new Date(this.created_at) < end); }
                 jsonLogic.add_operation("has", has);
                 jsonLogic.add_operation("range", range);
 
-                timeSlices = new Map([
-                    ["1m", [d3.timeMinute, 1]], ["5m", [d3.timeMinute, 5]], ["10m", [d3.timeMinute, 10]],
-                    ["15m", [d3.timeMinute, 15]], ["30m", [d3.timeMinute, 30]], ["1h", [d3.timeHour, 1]],
-                    ["2h", [d3.timeHour, 2]], ["6h", [d3.timeHour, 6]], ["12h", [d3.timeHour, 12]], ["1d", [d3.timeDay, 1]],
-                    ["2d", [d3.timeDay, 2]], ["1w", [d3.timeWeek, 1]], ["1month", [d3.timeMonth, 1]]
-                ]);
-
-                timeRanges = new Map([
-                    ["today", now => [utils.date.midnight(now), now]],
-                    ["yesterday", now => [utils.date.midnight(moment(now).subtract(1, "day")), utils.date.midnight(now)]],
-                    ["last 24h", now => [new Date(moment(now).subtract(1, "day")), now]],
-                    ["last 48h", now => [new Date(moment(now).subtract(2, "day")), now]],
-                    ["last 7d", now => [new Date(moment(now).subtract(1, "week")), now]],
-                    ["last 14d", now => [new Date(moment(now).subtract(2, "week")), now]],
-                    ["last month", now => [new Date(moment(now).subtract(1, "month")), now]],
-                    ["last 2 month", now => [new Date(moment(now).subtract(2, "month")), now]]
-                ]);
-
-                colorList = ["#00698B", "#6ea03c", "#7c7c7c", "#E46C16",
-                    "#9A4483","#F0BD00", "#d62728",  "#8c564b",
-                    "#17becf", "#2ca02c", "#ff7f0e", "#9467bd",
-                    "#1f77b4", "#bcbd22"];
             };
 
             this.ready = async () => {
@@ -241,16 +211,21 @@
                 },
                 solveTeams: () => {},
                 timeRanges: new Map([
-                    ["today", now => [utils.date.midnight(now), now]],
-                    ["yesterday", now => [utils.date.midnight(moment(now).subtract(1, "day")), utils.date.midnight(now)]],
-                    ["last 24h", now => [new Date(moment(now).subtract(1, "day")), now]],
-                    ["last 48h", now => [new Date(moment(now).subtract(2, "day")), now]],
+                    ["Heute", now => [new Date(moment(now).startOf("day")), now]],
+                    ["Gestern", now => [new Date(moment().subtract(1, 'days').startOf('day')), new Date(moment().subtract(1, 'days').endOf('day'))]],
+                    ["Letzten 24h", now => [new Date(moment(now).subtract(1, "day")), now]],
+                    ["Letzten 48h", now => [new Date(moment(now).subtract(2, "day")), now]],
                     ["last 7d", now => [new Date(moment(now).subtract(1, "week")), now]],
                     ["last 14d", now => [new Date(moment(now).subtract(2, "week")), now]],
                     ["last month", now => [new Date(moment(now).subtract(1, "month")), now]],
                     ["last 2 month", now => [new Date(moment(now).subtract(2, "month")), now]]
                 ]),
-                timeSlices: () => timeSlices,
+                timeSlices: new Map([
+                    /*["1m", [d3.timeMinute, 1]]*/["5m", [d3.timeMinute, 5]], ["10m", [d3.timeMinute, 10]],
+                    ["15m", [d3.timeMinute, 15]], ["30m", [d3.timeMinute, 30]], ["1h", [d3.timeHour, 1]],
+                    ["2h", [d3.timeHour, 2]], ["6h", [d3.timeHour, 6]], ["12h", [d3.timeHour, 12]], ["1d", [d3.timeDay, 1]],
+                    ["2d", [d3.timeDay, 2]], ["1w", [d3.timeWeek, 1]], ["1M", [d3.timeMonth, 1]]
+                ]),
                 datetime: {
                     gt: (data, value) => {
                         let now = new Date();
@@ -285,7 +260,7 @@
             };
 
             this.rerender = () => {
-
+                rerender = true;
                 let data = self.data;
 
                 if (self.worker)
@@ -293,21 +268,23 @@
                         colors: self.helper.colors,
                         course: self.course ? self.course : undefined,
                         data: data,
+                        groupBy: self.groupBy ? self.groupBy : undefined,
                         incompleteLog: self.incompleteLog ? self.incompleteLog : false,
                         interval: self.interval ? self.interval : undefined,
+                        limit: self.limit ? self.limit : undefined,
+                        processing: self.processing ? self.processing : undefined,
                         range: self.range ? self.range : undefined,
+                        render: self.render ? self.render : undefined,
+                        size: self.size ? self.size : undefined,
+                        sort: self.sort ? self.sort : undefined,
                         subject: self.subject ? self.subject : undefined,
                     });
                 else {
                     if (self.process)
                         data = self.process(data, self);
-
-                    rerender = true;
-
                     if (data)
                         render()[self.render.key](data);
                 }
-
             };
 
             this.update = async (dataset, source, flag) => await update(dataset, self.sources[source]);
@@ -359,9 +336,15 @@
                         colors: self.helper.colors,
                         course: self.course ? self.course : undefined,
                         data: data,
+                        groupBy: self.groupBy ? self.groupBy : undefined,
                         incompleteLog: self.incompleteLog ? self.incompleteLog : false,
                         interval: self.interval ? self.interval : undefined,
+                        limit: self.limit ? self.limit : undefined,
+                        processing: self.processing ? self.processing : undefined,
                         range: self.range ? self.range : undefined,
+                        render: self.render ? self.render : undefined,
+                        size: self.size ? self.size : undefined,
+                        sort: self.sort ? self.sort : undefined,
                         subject: self.subject ? self.subject : undefined,
                     });
                 else {
@@ -391,7 +374,7 @@
                             x: [76, 20],
                             y: [0, 0],
                             theme: {
-                                'stroke-width': 1,
+                                "stroke-width": 1,
                                 stroke: "#dadade",
                                 r: 0,
                                 padding: 5,
@@ -407,10 +390,10 @@
                                     x: buttonsSettings.x.pop(),
                                     y: buttonsSettings.y.pop(),
                                     theme: buttonsSettings.theme,
-                                    text: "Interval",
+                                    text: "Intervall",
                                     menuItems: function () {
                                         let bc = [];
-                                        timeSlices.forEach((value, key) => {
+                                        self.helper.timeSlices.forEach((value, key) => {
                                             if (!self.interval.exclude.includes(key))
                                                 bc.push({
                                                     text: key,
@@ -434,7 +417,7 @@
                                     y: buttonsSettings.y.pop(),
                                     className: "cm-hc-custom-range",
                                     theme: buttonsSettings.theme,
-                                    text: self.range.range === "lessons" && self.course && self.course.lessons ? "Lesson" : "Range",
+                                    text: self.range.range === "lessons" && self.course && self.course.lessons ? "Lerneinheit" : "Zeitraum",
                                     menuItems: function () {
                                         // Calendar weeks
                                         if (self.range.range === "weeks") {
@@ -459,7 +442,7 @@
                                         }
 
                                         let ranges = [];
-                                        timeRanges.forEach((value, key) => {
+                                        self.helper.timeRanges.forEach((value, key) => {
                                             ranges.push({
                                                 text: key,
                                                 theme: {"font-size": "8px"},
@@ -540,7 +523,7 @@
 
                         if ($.isObject(self.render.highcharts))
                             settings = $.convertObjectKeys(Object.assign(settings, self.render.highcharts));
-                        
+
                         //console.log(settings); // @TODO remove debug print before live
                         if (!self.visualization) {
                             rerender = false;
@@ -548,15 +531,15 @@
                             self.visualization = Highcharts.chart(div, settings);
                             $.setContent( self.element.querySelector( "#main" ), div );
                         } else if (rerender) {
-                            //console.debug("monitor-" + self.monitor.uid + ": Rerender Chart");
                             rerender = false;
                             const div = document.createElement( 'div' );
                             self.visualization = Highcharts.chart(div, settings);
                             $.setContent( self.element.querySelector( "#main" ), div );
                         }
-                        else
+                        else {
                             self.visualization.series.forEach((series, i) => series ?
                                 series.setData(data.series[i].data): null);
+                        }
                     },
                     none: data => {
                         //console.log(data);
@@ -575,11 +558,18 @@
                                     return {
                                         tag: "a",
                                         id: $.deepValue(dataset, key),
-                                        inner: $.deepValue(dataset, key) ,
+                                        inner: self.course ?
+                                            self.course.humanReadable.learners[$.deepValue(dataset, key)] ?
+                                                self.course.humanReadable.learners[$.deepValue(dataset, key)] :
+                                                $.deepValue(dataset, key) : $.deepValue(dataset, key),
                                         onclick: function (event) {
                                             self.parent.fromChild.panel(dataset.key, self.subject, !!self.teams);
                                         }
                                 };
+                                if (link === "learner")
+                                    return self.course ? self.course.humanReadable.learners[$.deepValue(dataset, key)] ?
+                                        self.course.humanReadable.learners[$.deepValue(dataset, key)] :
+                                        $.deepValue(dataset, key) : $.deepValue(dataset, key);
                                 if (key === "created_at" || key === "updated_at")
                                     return $.deepValue(dataset, key).replace("T", " ").slice(0,19);
                                 if (key.indexOf(",") > 1)
@@ -620,11 +610,9 @@
 
                         let columns = self.render.columns;
 
-                        // @Todo Up&Down icons for sorting
                         let rows = Object.values(data.aggregated).reduce((prev, subject) => {
                             prev = prev.concat(
                                 { tag: "tr", inner: columns.order.map(td => $.format(self.templates.tables.td, {
-                                    //tdInner: setCell(subject, columns[td].key, td) // without filterAbility @TODO remove before live
                                         tdInner: function () {
                                             if (!columns[td].filter)
                                                 return setCell(subject, columns[td].key, td);
@@ -671,7 +659,11 @@
 
                         let table = $.html(self.templates.tables.table, {
                             height: self.size.height - 60,
-                            thead: columns.order.map(th => ( { tag: "th", style: "position: sticky; top: 0; z-index: 10;", inner: columns[th].label } ) ),
+                            thead: columns.order.map(th => ( {
+                                tag: "th",
+                                style: "position: sticky; top: 0; z-index: 10;",
+                                inner: "<span>" + columns[th].label + "</span><span class='glyphicon glyphicon-sort-by-attributes-alt ilDclSelectRecord cm-small'></span>"
+                            } ) ),
                             tbody: rows
                         });
                         $.setContent( self.element.querySelector( "#main" ), table );
@@ -687,26 +679,28 @@
                             )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
 
                         // do the work...
-                        self.element.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+                        self.element.querySelectorAll('th').forEach(th => th.addEventListener('click', function (event) {
+                            this.parentNode.querySelectorAll(".glyphicon")
+                                .forEach(sortIcon => sortIcon.classList.remove("text-info"));
+                            let icon = this.querySelector(".glyphicon");
+                            if (icon.classList.contains("glyphicon-sort-by-attributes")) {
+                                icon.classList.remove("glyphicon-sort-by-attributes");
+                                icon.classList.add("glyphicon-sort-by-attributes-alt");
+                            }
+                            else {
+                                icon.classList.remove("glyphicon-sort-by-attributes-alt");
+                                icon.classList.add("glyphicon-sort-by-attributes");
+                            }
+                            icon.classList.add("text-info");
                             const table = th.closest('table');
                             const tbody = table.querySelector("tbody");
                             Array.from(tbody.querySelectorAll('tr:nth-child(n+1)'))
                                 .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
                                 .forEach(tr => tbody.appendChild(tr) );
-                        })));
+                        }));
                     },
                 };
             }
-
-            utils = {
-                date: {
-                    midnight: date => {
-                        date = new Date(date);
-                        date.setHours(0,0,0,0);
-                        return date;
-                    }
-                }
-            };
 
             function config() {
                 return {
