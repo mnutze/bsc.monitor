@@ -21,6 +21,18 @@ ccm.files[ 'configs.js' ] = {
             }
         },
     },
+    
+    communication: {
+        render: { key: "none" },
+        stores: {
+            log: {
+                store: [ "ccm.store", { name: "log" } ],
+                key: {},
+                onchangeFilter: {}
+            }
+        },
+        worker: "./assets/worker.communication_analysis.js"
+    },
 
     courseActivities: {
         process: [ "ccm.load", { url: "./assets/monitor.leader.js", type: "js" } ],

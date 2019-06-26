@@ -3,7 +3,7 @@ ccm.files[ "templates.js" ] = {
         // id: "il_center_col", class: "col-sm-12"
         id: "", class: "", inner: {
             class: "ilTableOuter", inner: {
-                class: "table-responsive", style:"overflow-y: scroll; height:%height%px;", inner: {
+                class: "table-responsive", style:"overflow-y: scroll; height:%height%px; width: %width%px;", inner: {
                     tag: "table", class: "table table-striped fullwidth", inner: [
                         { tag: "thead", inner: { tag: "tr", inner: "%thead%" } },
                         { tag: "tbody", inner: "%tbody%" }
@@ -16,7 +16,7 @@ ccm.files[ "templates.js" ] = {
         table: {
             id: "", class: "", inner: {
                 class: "ilTableOuter", inner: {
-                    class: "table-responsive", style:"overflow-y: scroll; height:%height%px;", inner: {
+                    class: "table-responsive", style:"overflow-y: scroll; height:%height%px; width: %width%px;", inner: {
                         tag: "table", class: "table table-striped fullwidth", inner: [
                             { tag: "thead", inner: { tag: "tr", inner: "%thead%" } },
                             { tag: "tbody", inner: "%tbody%" }
