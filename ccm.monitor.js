@@ -12,7 +12,6 @@
  * Personal/Student Use|Not-for-Profit Educational Institution use for the following product(s): Highcharts, Highstock
  * @version latest (1.0.0)
  */
-
 ( function () {
     const component = {
 
@@ -72,7 +71,7 @@
         Instance: function () {
 
             const self = this;
-            let $, navContainer, rerender = true;
+            let $, navContainer, time, rerender = true;
 
             this.init = async () => {
                 
@@ -87,15 +86,15 @@
                             render()[self.render.key](data);
                     }, false);
                 }
-
                 // make sure that "highcharts.js" library is executed only once
                 !window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/exporting.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/data.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/drilldown.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts-more.js");
+
                 //await self.ccm.load( "https://code.highcharts.com/modules/series-label.js" );
-                //await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/heatmap.js" );
+                await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/heatmap.js" );
 
                 // load jsonLogic only once
                 !window.jsonLogic && await self.ccm.load("https://mnutze.github.io/bsc.monitoring-courses/libs/js/logic.js");
@@ -106,6 +105,9 @@
                 // make sure that "d3.js" library is executed only once
                 !window.moment && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js" );
                 await self.ccm.load("https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.13/moment-timezone-with-data-2012-2022.min.js");
+
+                // load jsonLogic only once
+                !window.cmMonitorHelper && await self.ccm.load("./assets/cmMonitorHelper.js");
 
                 Highcharts.dateFormats = {
                     W: function (timestamp) {
@@ -119,6 +121,9 @@
                 jsonLogic.add_operation("has", has);
                 jsonLogic.add_operation("range", range);
 
+                time = {
+
+                };
             };
 
             this.ready = async () => {
@@ -146,7 +151,6 @@
             };
 
             this.start = async () => {
-
                 // put main HTML structure into frontend
                 $.setContent( self.element, $.html( self.html.main, {
                     loading: $.loading()
@@ -200,8 +204,6 @@
             };
 
             this.helper = {
-                colors: ["#00698B", "#6ea03c", "#7c7c7c", "#E46C16", "#9A4483","#F0BD00", "#d62728",  "#8c564b",
-                    "#17becf", "#2ca02c", "#ff7f0e", "#9467bd", "#1f77b4", "#bcbd22"],
                 filterData: (data, rules) => {
                     if (!data)
                         return data;
@@ -209,63 +211,28 @@
                         return;
                     return data.filter(dataset => jsonLogic.apply(rules, dataset));
                 },
-                solveTeams: () => {},
-                timeRanges: new Map([
-                    ["Heute", now => [new Date(moment(now).startOf("day")), now]],
-                    ["Gestern", now => [new Date(moment().subtract(1, 'days').startOf('day')), new Date(moment().subtract(1, 'days').endOf('day'))]],
-                    ["Letzten 24h", now => [new Date(moment(now).subtract(1, "day")), now]],
-                    ["Letzten 48h", now => [new Date(moment(now).subtract(2, "day")), now]],
-                    ["last 7d", now => [new Date(moment(now).subtract(1, "week")), now]],
-                    ["last 14d", now => [new Date(moment(now).subtract(2, "week")), now]],
-                    ["last month", now => [new Date(moment(now).subtract(1, "month")), now]],
-                    ["last 2 month", now => [new Date(moment(now).subtract(2, "month")), now]]
-                ]),
-                timeSlices: new Map([
-                    /*["1m", [d3.timeMinute, 1]]*/["5m", [d3.timeMinute, 5]], ["10m", [d3.timeMinute, 10]],
-                    ["15m", [d3.timeMinute, 15]], ["30m", [d3.timeMinute, 30]], ["1h", [d3.timeHour, 1]],
-                    ["2h", [d3.timeHour, 2]], ["6h", [d3.timeHour, 6]], ["12h", [d3.timeHour, 12]], ["1d", [d3.timeDay, 1]],
-                    ["2d", [d3.timeDay, 2]], ["1w", [d3.timeWeek, 1]], ["1M", [d3.timeMonth, 1]]
-                ]),
-                datetime: {
-                    gt: (data, value) => {
-                        let now = new Date();
-                        now.setMinutes(now.getMinutes() - value);
-                        data= data.filter(dataset => (new Date(dataset.created_at) > now));
-                        return data;
-                    },
-                    mondayWeek: () => d3.timeMonday,
-                    range: data => d3.extent(data, dataset => new Date(dataset.created_at)),
-                    histogram: (data, domain, unit, value) => {
-                        if (!domain)
-                            domain = d3.extent(data, dataset => new Date(dataset.created_at));
-                        let x = d3.scaleTime().domain(domain);
-
-                        // create histogram function
-                        let histogram = d3.histogram()
-                            .value(dataset => new Date(dataset.created_at))
-                            .domain(domain)
-                            .thresholds(x.ticks(unit, value));
-
-                        return histogram(data);
-                    }
-                },
-                teams: data => { // connect log-data of user with their team
+                setTeamId: data => { // connect log-data of user with their team
                     return data.map(dataset => {
                         if (dataset.user && dataset.user.user)
-                            dataset.team = self.teams.learners[dataset.user.user] ?
-                                self.teams.learners[dataset.user.user] : undefined;
+                            dataset.team = self.course.learners[dataset.user.user] ?
+                                self.course.learners[dataset.user.user] : undefined;
                         return dataset
                     });
                 }
             };
 
             this.rerender = () => {
+                self.element.style = $.format("height: %height%px; width: %width%px", {
+                    height: self.size.height - 50,
+                    width: self.size.width - 30
+                });
+                console.log("rerender")
                 rerender = true;
                 let data = self.data;
 
                 if (self.worker)
                     self.worker.postMessage({
-                        colors: self.helper.colors,
+                        colors: cmMonitorHelper.colors,
                         course: self.course ? self.course : undefined,
                         data: data,
                         groupBy: self.groupBy ? self.groupBy : undefined,
@@ -273,23 +240,31 @@
                         interval: self.interval ? self.interval : undefined,
                         limit: self.limit ? self.limit : undefined,
                         processing: self.processing ? self.processing : undefined,
+                        profile: self.profile ? self.profile : undefined,
                         range: self.range ? self.range : undefined,
                         render: self.render ? self.render : undefined,
                         size: self.size ? self.size : undefined,
                         sort: self.sort ? self.sort : undefined,
                         subject: self.subject ? self.subject : undefined,
+                        teams: self.teams ? self.teams : undefined
                     });
                 else {
                     if (self.process)
                         data = self.process(data, self);
+
+                    if (self["no-rlt"] && !rerender)
+                        return;
+
                     if (data)
                         render()[self.render.key](data);
                 }
             };
 
-            this.update = async (dataset, source, flag) => await update(dataset, self.sources[source]);
+            this.terminateWorker = () => self.worker.terminate();
 
-            async function update (dataset, source) {
+            this.update = async (dataset, source, flag) => await update(dataset, self.sources[source], flag);
+
+            async function update (dataset, source, flag) {
                 //console.log(dataset, source);
                 if (dataset && $.isObject(dataset)) {
                     if ($.isObject(source))
@@ -302,7 +277,7 @@
                         return;
 
                     if (self.teams) // extend log entries with a property team and the user corresponding team-value
-                        dataset = self.helper.teams([dataset])[0];
+                        dataset = self.helper.setTeamId([dataset])[0];
 
                     /**
                      * @info source.name === "log" -> log-entries must not be checked, if these are an update for
@@ -322,18 +297,22 @@
                     } else
                         self.data[source.name].push(dataset);
                 }
-                else if (Array.isArray(dataset)) {
+                else if (Array.isArray(dataset) && !flag) {
                     //console.log(self.widget, dataset);
                     self.data[source.name] = self.data[source.name].concat(self.helper.filterData(dataset, source.filter));
                     if (self.teams) // extend log entries with a property team and the user corresponding team-value
-                        self.data[source.name] = self.helper.teams(self.data[source.name]);
+                        self.data[source.name] = self.helper.setTeamId(self.data[source.name]);
+                } else if (Array.isArray(dataset) && flag) { // data already filtered by parent
+                    self.data[source.name] = self.data[source.name].concat(dataset);
+                    if (self.teams) // extend log entries with a property team and the user corresponding team-value
+                        self.data[source.name] = self.helper.setTeamId(self.data[source.name]);
                 }
 
                 let data = self.data;
 
                 if (self.worker)
                     self.worker.postMessage({
-                        colors: self.helper.colors,
+                        colors: cmMonitorHelper.colors,
                         course: self.course ? self.course : undefined,
                         data: data,
                         groupBy: self.groupBy ? self.groupBy : undefined,
@@ -341,11 +320,13 @@
                         interval: self.interval ? self.interval : undefined,
                         limit: self.limit ? self.limit : undefined,
                         processing: self.processing ? self.processing : undefined,
+                        profile: self.profile ? self.profile : undefined,
                         range: self.range ? self.range : undefined,
                         render: self.render ? self.render : undefined,
                         size: self.size ? self.size : undefined,
                         sort: self.sort ? self.sort : undefined,
                         subject: self.subject ? self.subject : undefined,
+                        teams: self.teams ? self.teams : undefined
                     });
                 else {
                     if (self.process)
@@ -390,10 +371,10 @@
                                     x: buttonsSettings.x.pop(),
                                     y: buttonsSettings.y.pop(),
                                     theme: buttonsSettings.theme,
-                                    text: "Intervall",
+                                    text: "Interval",
                                     menuItems: function () {
                                         let bc = [];
-                                        self.helper.timeSlices.forEach((value, key) => {
+                                        cmMonitorHelper.time.interval.forEach((value, key) => {
                                             if (!self.interval.exclude.includes(key))
                                                 bc.push({
                                                     text: key,
@@ -417,12 +398,14 @@
                                     y: buttonsSettings.y.pop(),
                                     className: "cm-hc-custom-range",
                                     theme: buttonsSettings.theme,
-                                    text: self.range.range === "lessons" && self.course && self.course.lessons ? "Lerneinheit" : "Zeitraum",
+                                    text: self.range.range === "lessons" && self.course && self.course.lessons ? "Unit" : "Time-Range",
                                     menuItems: function () {
                                         // Calendar weeks
                                         if (self.range.range === "weeks") {
+                                            if (data.rangeValues)
+                                                self.range.values = data.rangeValues;
                                             return self.range.values.map(range => ({
-                                                text: "KW-" + moment(range.x0).isoWeek(),
+                                                text: "W-" + moment(range.x0).isoWeek(),
                                                 theme: {"font-size": "8px"},
                                                 onclick: (ev) => {
                                                     self.range.current = [range.x0, range.x1];
@@ -442,7 +425,7 @@
                                         }
 
                                         let ranges = [];
-                                        self.helper.timeRanges.forEach((value, key) => {
+                                        cmMonitorHelper.time.range.forEach((value, key) => {
                                             ranges.push({
                                                 text: key,
                                                 theme: {"font-size": "8px"},
@@ -482,7 +465,7 @@
                                     }
                                 }
                             },
-                            colors: self.helper.colors,
+                            colors: cmMonitorHelper.colors,
                             "exporting.buttons.contextButton.enabled": false,
                             legend: {
                                 enabled: false,
@@ -542,7 +525,7 @@
                         }
                     },
                     none: data => {
-                        //console.log(data);
+                        $.setContent( self.element.querySelector( "#main" ), "" );
                     },
                     multiple_tables: data => {
                         //console.log(data);
@@ -601,7 +584,7 @@
                                     .data([$.deepValue(dataset, key)])
                                     .attr("class", "line")
                                     .attr("style", "fill: none; stroke-width: 1px;")
-                                    .attr("stroke", self.helper.colors[0])
+                                    .attr("stroke", cmMonitorHelper.colors[0])
                                     .attr("d", line);
 
                                 return div;
@@ -658,6 +641,7 @@
                         }, [] ) ;
 
                         let table = $.html(self.templates.tables.table, {
+                            width: self.size.width - 30,
                             height: self.size.height - 60,
                             thead: columns.order.map(th => ( {
                                 tag: "th",

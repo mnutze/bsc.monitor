@@ -11,7 +11,7 @@ self.addEventListener("message", function (event) {
     let subject = event.data.subject;
 
     if (!lessons) {
-        console.error("No Lessons available / defined");
+        console.error("No Units available / defined");
         self.postMessage({});
         return;
     }
@@ -78,7 +78,7 @@ self.addEventListener("message", function (event) {
                     "dashStyle": "LongDash",
                     "label": {
                         "rotation": 0,
-                        "text": "98 Punkte zur<br>Klausurzulassung",
+                        "text": "98 Points needed<br>for exam admission",
                         "y": event.data.size ? (event.data.size.height - 50) / 2 : undefined,
                         "x": -10,
                         "align": "right"

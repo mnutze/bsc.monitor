@@ -1,61 +1,6 @@
 importScripts("https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.min.js");
-importScripts("https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js");
 importScripts("https://mnutze.github.io/bsc.monitoring-courses/libs/js/logic.js");
-
-/** @from ccm.js
- * @summary get or set the value of a deeper object property
- * @param {Object} obj - object that contains the deeper property
- * @param {string} key - key path to the deeper property in dot notation
- * @param {*} [value] - value that should be set for the deeper property
- * @returns {*} value of the deeper property
- * @example
- * var obj = {
- *   test: 123,
- *   foo: {
- *     bar: 'abc',
- *     baz: 'xyz'
- *   }
- * };
- * var result = ccm.helper.deepValue( obj, 'foo.bar' );
- * console.log( result ); // => 'abc'
- * @example
- * var obj = {};
- * var result = ccm.helper.deepValue( obj, 'foo.bar', 'abc' );
- * console.log( obj );    // => { foo: { bar: 'abc' } }
- * console.log( result ); // => 'abc'
- */
-function deepValue ( obj, key, value ) {
-    return recursive( obj, key.split( '.' ), value );
-    /**
-     * recursive helper function, key path is given as array
-     */
-    function recursive( obj, key, value ) {
-        if ( !obj ) return;
-        var next = key.shift();
-        if ( key.length === 0 )
-            return value !== undefined ? obj[ next ] = value : obj[ next ];
-        if ( !obj[ next ] && value !== undefined ) obj[ next ] = isNaN( key[ 0 ] ) ? {} : [];
-        return recursive( obj[ next ], key, value );  // recursive call
-    }
-}
-
-function rangeFunc (data) {
-    return d3.extent(data, dataset => new Date(dataset.created_at));
-}
-
-function histogramFunc (data, domain, unit, value) {
-    if (!domain)
-        domain = d3.extent(data, dataset => new Date(dataset.created_at));
-    let x = d3.scaleTime().domain(domain);
-
-    // create histogram function
-    let histogram = d3.histogram()
-        .value(dataset => new Date(dataset.created_at))
-        .domain(domain)
-        .thresholds(x.ticks(unit, value));
-
-    return histogram(data);
-}
+importScripts("./cmMonitorHelper.js");
 
 self.addEventListener("message", function (event) {
 
@@ -68,7 +13,7 @@ self.addEventListener("message", function (event) {
     let interval = event.data.interval;
 
     if (!lessons) {
-        console.error("No Lessons available / defined");
+        console.error("No Units available / defined");
         self.postMessage({});
         return;
     }
@@ -125,7 +70,7 @@ self.addEventListener("message", function (event) {
     };
 
     log = log.filter(entry => jsonLogic.apply(filter, entry));
-    let histogram = histogramFunc(log, rangeFunc(log), d3.timeHour, 2);
+    let histogram = cmMonitorHelper.time.histogram(log, cmMonitorHelper.time.domain(log), d3.timeHour, 2);
 
     let processed = {
         activities: {

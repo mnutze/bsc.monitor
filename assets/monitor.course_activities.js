@@ -10,17 +10,17 @@ ccm.files["monitor.course_activities.js"] = function (data, instance) {
         return;
 
     if (instance.subject && instance.subject.teams) {
-        data = helper.teams(data);
+        data = helper.setTeamId(data);
     }
 
     if (instance.range.range === null) {
-        data = helper.filterData(data, { range: helper.timeRanges.get("last 7d")(new Date) } );
+        data = cmMonitorHelper.data.filter(data, { range: helper.timeRanges.get("last 7d")(new Date) } );
         instance.range.range = "last 7d";
     } else
-        data = helper.filterData(data, { range: helper.timeRanges.get(instance.range.range)(new Date) } );
+        data = cmMonitorHelper.data.filter(data, { range: helper.timeRanges.get(instance.range.range)(new Date) } );
 
     if (instance.subject && instance.subject.values && instance.subject.values.length > 0 && Array.isArray(instance.subject.values))
-        data = helper.filterData(data, {
+        data = cmMonitorHelper.data.filter(data, {
             or: instance.subject.values.map(value => ({
                 "===" : [
                     { var : instance.subject.key }, instance.subject.teams ? instance.teams.get().teams.filter(team => team.name === value)[0].key : value
@@ -91,12 +91,12 @@ ccm.files["monitor.course_activities.js"] = function (data, instance) {
     switch(chart) {
         case "bar":
             if (!groupBySecondary) {
-                settings.series[0] = {name: "Actions", color: helper.colors[0], data: []};
+                settings.series[0] = {name: "Actions", color: cmMonitorHelper.colors[0], data: []};
                 data.forEach((value, key)=>settings.series[0].data.push(value.length));
             } else {
                 settings.series = y.map((second, i) => ( {
                     name: second,
-                    color: helper.colors[i % helper.colors.length],
+                    color: cmMonitorHelper.colors[i % cmMonitorHelper.colors.length],
                     data: Array.from(data).map(primary =>
                         primary[1].has(second) ? primary[1].get(second).length : 0 )
                 } ) )
@@ -104,12 +104,12 @@ ccm.files["monitor.course_activities.js"] = function (data, instance) {
             return settings;
         case "column":
             if (!groupBySecondary) {
-                settings.series[0] = {name: "Actions", color: helper.colors[0], data: []};
+                settings.series[0] = {name: "Actions", color: cmMonitorHelper.colors[0], data: []};
                 data.forEach((value, key)=>settings.series[0].data.push(value.length));
             } else {
                 settings.series = y.map((second, i) => ( {
                     name: second,
-                    color: helper.colors[i % helper.colors.length],
+                    color: cmMonitorHelper.colors[i % cmMonitorHelper.colors.length],
                     data: Array.from(data).map(primary =>
                         primary[1].has(second) ? primary[1].get(second).length : 0 )
                 } ) )

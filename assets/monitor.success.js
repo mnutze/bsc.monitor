@@ -1,8 +1,5 @@
 ccm.files["monitor.success.js"] = function (data, instance) {
 
-    let $ = instance.ccm.helper,
-        helper = instance.helper;
-
     // assign log data
     data = data.solutions;
 

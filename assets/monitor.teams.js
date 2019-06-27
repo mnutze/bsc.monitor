@@ -1,8 +1,7 @@
 ccm.files["monitor.teams.js"] = function (data, instance) {
-
-    let $ = instance.ccm.helper,
-        helper = instance.helper;
-
+    
+    let subject = instance.subject;
+    let teams = instance.course.teams;
     // assign log data
     data = data.log;
 
@@ -35,15 +34,13 @@ ccm.files["monitor.teams.js"] = function (data, instance) {
     };
 
     let domain = d3.extent(data, datum => new Date(datum.created_at));
-
-    let teams = instance.teams.teams;
-
+    
     data = data.reduce((prev, curr) => {
-        if (!teams[$.deepValue(curr, instance.subject.key)])
+        if (!teams[cmMonitorHelper.deepValue(curr, subject.key)])
             return prev;
-        if (!prev[$.deepValue(curr, instance.subject.key)])
-            prev[$.deepValue(curr, instance.subject.key)] = {
-                key: $.deepValue(curr, instance.subject.key),
+        if (!prev[cmMonitorHelper.deepValue(curr, subject.key)])
+            prev[cmMonitorHelper.deepValue(curr, subject.key)] = {
+                key: cmMonitorHelper.deepValue(curr, subject.key),
                 last: {
                     online: curr.created_at,
                     action: jsonLogic.apply(rules.action, curr) ? curr.created_at : 0
@@ -57,40 +54,40 @@ ccm.files["monitor.teams.js"] = function (data, instance) {
                     action: jsonLogic.apply(rules.action, curr) ? [ { created_at: curr.created_at } ] : []
                 },
                 members: [curr.user.user],
-                label: teams[$.deepValue(curr, instance.subject.key)].name
+                label: teams[cmMonitorHelper.deepValue(curr, subject.key)].name
             };
         else {
-            prev[$.deepValue(curr, instance.subject.key)].profile.online =
-                prev[$.deepValue(curr, instance.subject.key)].profile.online.concat({ created_at: curr.created_at });
+            prev[cmMonitorHelper.deepValue(curr, subject.key)].profile.online =
+                prev[cmMonitorHelper.deepValue(curr, subject.key)].profile.online.concat({ created_at: curr.created_at });
 
-            prev[$.deepValue(curr, instance.subject.key)].sum.online += 1;
+            prev[cmMonitorHelper.deepValue(curr, subject.key)].sum.online += 1;
 
             // already member?
-            if (!prev[$.deepValue(curr, instance.subject.key)].members.includes(curr.user.user))
-                prev[$.deepValue(curr, instance.subject.key)].members =
-                    prev[$.deepValue(curr, instance.subject.key)].members.concat(curr.user.user);
+            if (!prev[cmMonitorHelper.deepValue(curr, subject.key)].members.includes(curr.user.user))
+                prev[cmMonitorHelper.deepValue(curr, subject.key)].members =
+                    prev[cmMonitorHelper.deepValue(curr, subject.key)].members.concat(curr.user.user);
 
             // online activity
-            if (Date.parse(prev[$.deepValue(curr, instance.subject.key)].last.online) < Date.parse(curr.created_at))
-                prev[$.deepValue(curr, instance.subject.key)].last.online = curr.created_at;
+            if (Date.parse(prev[cmMonitorHelper.deepValue(curr, subject.key)].last.online) < Date.parse(curr.created_at))
+                prev[cmMonitorHelper.deepValue(curr, subject.key)].last.online = curr.created_at;
 
             // real action
             if (jsonLogic.apply(rules.action, curr)) {
-                if (Date.parse(prev[$.deepValue(curr, instance.subject.key)].last.action) < Date.parse(curr.created_at)) {
-                    prev[$.deepValue(curr, instance.subject.key)].last.action = curr.created_at;
-                    prev[$.deepValue(curr, instance.subject.key)].sum.action += 1;
+                if (Date.parse(prev[cmMonitorHelper.deepValue(curr, subject.key)].last.action) < Date.parse(curr.created_at)) {
+                    prev[cmMonitorHelper.deepValue(curr, subject.key)].last.action = curr.created_at;
+                    prev[cmMonitorHelper.deepValue(curr, subject.key)].sum.action += 1;
                 }
-                prev[$.deepValue(curr, instance.subject.key)].profile.action =
-                    prev[$.deepValue(curr, instance.subject.key)].profile.action.concat({ created_at: curr.created_at });
+                prev[cmMonitorHelper.deepValue(curr, subject.key)].profile.action =
+                    prev[cmMonitorHelper.deepValue(curr, subject.key)].profile.action.concat({ created_at: curr.created_at });
             }
         }
         return prev;
     },{});
 
-    let interval = helper.timeSlices.get("1h");
+    let interval = cmMonitorHelper.time.interval.get("1h");
     Object.entries(data).forEach(dataset => {
-        data[dataset[0]].profile.online = helper.datetime.histogram(dataset[1].profile.online, domain, ...interval);
-        data[dataset[0]].profile.action = helper.datetime.histogram(dataset[1].profile.action, domain, ...interval);
+        data[dataset[0]].profile.online = cmMonitorHelper.time.histogram(dataset[1].profile.online, domain, ...interval);
+        data[dataset[0]].profile.action = cmMonitorHelper.time.histogram(dataset[1].profile.action, domain, ...interval);
         data[dataset[0]].last.online = data[dataset[0]].last.online !== 0 ? data[dataset[0]].last.online.replace("T", " ").split("+")[0] : "---";
         data[dataset[0]].last.action = data[dataset[0]].last.action !== 0 ? data[dataset[0]].last.action.replace("T", " ").split("+")[0] : "---";
     });

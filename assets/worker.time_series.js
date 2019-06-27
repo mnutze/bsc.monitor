@@ -1,23 +1,31 @@
-ccm.files["monitor.time_series.js"] = function (data, instance) {
+importScripts("https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.min.js");
+importScripts("https://mnutze.github.io/bsc.monitoring-courses/libs/js/logic.js");
+importScripts("https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js");
+importScripts("./cmMonitorHelper.js");
 
-    let $ = instance.ccm.helper,
-        helper = instance.helper;
+self.addEventListener("message", function (event) {
+
+    let data = event.data.data;
+    let range = event.data.range;
+    let render = event.data.render;
+    let subject = event.data.subject;
+    let teams = event.data.course.teams;
 
     // assign log data
     data = data.log;
 
-    if (data.length < 1)
+    if (!data || data.length < 1)
         return;
 
-    if (instance.render.type && instance.render.type === "hours") {
+    if (render.type && render.type === "hours") {
         // no interval selection
-        instance.interval = undefined;
+        event.data.interval = undefined;
 
-        if (instance.range && instance.range.range !== null)
-            data = helper.filterData(data, { range: helper.timeRanges.get(instance.range.range)(new Date) } );
+        if (range && range.range !== null)
+            data = cmMonitorHelper.data.filter(data, { range: cmMonitorHelper.time.range.get(range.range)(new Date) } );
         else {
-            instance.range.range = "last 7d";
-            data = helper.filterData(data, { range: helper.timeRanges.get(instance.range.range)(new Date) } );
+            range.range = "last 7d";
+            data = cmMonitorHelper.data.filter(data, { range: cmMonitorHelper.time.range.get(range.range)(new Date) } );
         }
 
         let day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -33,7 +41,7 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
 
         aggregated = Object.entries(aggregated).map((day, i) => ({
             type: "spline", name: day[0], yAxis: 0,
-            color: helper.colors[i % helper.colors.length],
+            color: cmMonitorHelper.colors[i % cmMonitorHelper.colors.length],
             data: Object.assign({},...d3.nest().key(datum => new Date(datum.created_at).getHours())
                 .entries(day[1]).map(hour => ({[hour.key]: hour.values.length})))
 
@@ -51,9 +59,9 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
         }
         aggregated.forEach(day => day.data = Object.entries(day.data));
 
-        return {
+        self.postMessage({
             "xAxis.labels.format": "{value}:00",
-            "subtitle.text": instance.range.range,
+            "subtitle.text": range.range,
             "subtitle.style": { fontWeight: "bold" },
             yAxis: [
                 { title: { text: "total-activity/h at weekday" } },
@@ -65,30 +73,28 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
             ], "plotOptions.series.marker.enabled": false,
             "tooltip.headerFormat": "<span style=\"font-size:11px; font-weight: bold;\">{point.key}:00</span><br>",
             tooltip: { enabled: true, shared: true}
-        };
+        });
     }
     else {
-        if (instance.range.range === null) {
-            data = helper.filterData(data, { range: helper.timeRanges.get("last 7d")(new Date) } );
-            instance.range.range = "last 7d";
+        if (range.range === null) {
+            data = cmMonitorHelper.data.filter(data, { range: cmMonitorHelper.time.range.get("last 7d")(new Date) } );
+            range.range = "last 7d";
         } else
-            data = helper.filterData(data, { range: helper.timeRanges.get(instance.range.range)(new Date) } );
+            data = cmMonitorHelper.data.filter(data, { range: cmMonitorHelper.time.range.get(range.range)(new Date) } );
 
-        let interval = [helper.timeSlices.get(instance.interval.current)[0], helper.timeSlices.get(instance.interval.current)[1]];
-        let subject = instance.subject.key;
-        let viewOptions = instance.subject.values;
-        let domain = helper.datetime.range(data);
+        let interval = cmMonitorHelper.time.interval.get(event.data.interval.current);
+        let domain = cmMonitorHelper.time.domain(data);
 
         // total count
-        let total = helper.datetime.histogram(data, domain, ...interval).map(range => [Date.parse(range.x1), range.length]);
+        let total = cmMonitorHelper.time.histogram(data, domain, ...interval).map(range => [Date.parse(range.x1), range.length]);
 
         // custom-lines
-        let wanted = viewOptions.map(key => data.filter(dataset => $.deepValue(dataset, subject) === key));
+        let wanted = subject.values.map(key => data.filter(dataset => cmMonitorHelper.deepValue(dataset, subject.key) === key));
 
         let selected = wanted.map((filtered, i) => ({
-            name: subject !== "team" ? viewOptions[i] : instance.teams.teams[viewOptions[i]].name,
-            color: helper.colors[i % helper.colors.length],
-            data: helper.datetime.histogram(filtered, domain, ...interval).map(range => [Date.parse(range.x1), range.length]),
+            name: subject.key !== "team" ? subject.values[i] : teams[subject.values[i]].name,
+            color: cmMonitorHelper.colors[i % cmMonitorHelper.colors.length],
+            data: cmMonitorHelper.time.histogram(filtered, domain, ...interval).map(range => [Date.parse(range.x1), range.length]),
             type: "spline",
             yAxis: 1,
         }));
@@ -98,12 +104,12 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
             name: "distinct Learner",
             type: "column",
             color: "#ff0000",
-            data: helper.datetime.histogram(data, domain, ...interval).map(range => {
+            data: cmMonitorHelper.time.histogram(data, domain, ...interval).map(range => {
                 distinct = [];
                 return [Date.parse(range.x1), range
                     .reduce((prev, curr) => {
-                        if(!distinct.includes($.deepValue(curr, subject))) {
-                            distinct.push($.deepValue(curr, subject));
+                        if(!distinct.includes(cmMonitorHelper.deepValue(curr, subject.key))) {
+                            distinct.push(cmMonitorHelper.deepValue(curr, subject.key));
                             return prev + 1;
                         }
                         return prev;
@@ -120,23 +126,23 @@ ccm.files["monitor.time_series.js"] = function (data, instance) {
             lineWidth: .5,
             dashStyle: "LongDash",
             states: { hover: { lineWidth: .5}},
-            data: helper.datetime.histogram(data, domain, ...interval).map(range => [Date.parse(range.x1),
+            data: cmMonitorHelper.time.histogram(data, domain, ...interval).map(range => [Date.parse(range.x1),
                 (range.length < 1 ? 0 : (range.length / range.reduce((prev, curr) =>
-                    !prev.includes($.deepValue(curr, subject)) ?
-                        prev.concat($.deepValue(curr, subject)) : prev, []).length))])
+                    !prev.includes(cmMonitorHelper.deepValue(curr, subject.key)) ?
+                        prev.concat(cmMonitorHelper.deepValue(curr, subject.key)) : prev, []).length))])
         };
-        return {
+        self.postMessage({
             "tooltip.enabled": true,
             "tooltip.shared": true,
             series: [].concat(avg, distinctCount, selected),
             "plotOptions.series.marker.enabled": false,
-            "subtitle.text": instance.range.range,
+            "subtitle.text": range.range,
             "subtitle.style": { fontWeight: "bold" },
             "xAxis.type": "datetime",
             yAxis: [
-                { title: { text: 'avg count \\ ' + instance.interval.current } },
-                { title: { text: "total count \\ " + instance.interval.current }, opposite: true }
+                { title: { text: 'avg count \\ ' + event.data.interval.current } },
+                { title: { text: "total count \\ " + event.data.interval.current }, opposite: true }
             ]
-        };
+        });
     }
-};
+}, false);

@@ -1,69 +1,10 @@
 importScripts("https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.min.js");
-importScripts("https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js");
 importScripts("https://mnutze.github.io/bsc.monitoring-courses/libs/js/logic.js");
-
-let range = function(start, end) {
-    return (new Date(this.created_at) > start && new Date(this.created_at) < end)
-};
-jsonLogic.add_operation("range", range);
-
-/** @from ccm.js
- * @summary get or set the value of a deeper object property
- * @param {Object} obj - object that contains the deeper property
- * @param {string} key - key path to the deeper property in dot notation
- * @param {*} [value] - value that should be set for the deeper property
- * @returns {*} value of the deeper property
- * @example
- * var obj = {
- *   test: 123,
- *   foo: {
- *     bar: 'abc',
- *     baz: 'xyz'
- *   }
- * };
- * var result = ccm.helper.deepValue( obj, 'foo.bar' );
- * console.log( result ); // => 'abc'
- * @example
- * var obj = {};
- * var result = ccm.helper.deepValue( obj, 'foo.bar', 'abc' );
- * console.log( obj );    // => { foo: { bar: 'abc' } }
- * console.log( result ); // => 'abc'
- */
-function deepValue ( obj, key, value ) {
-    return recursive( obj, key.split( '.' ), value );
-    /**
-     * recursive helper function, key path is given as array
-     */
-    function recursive( obj, key, value ) {
-        if ( !obj ) return;
-        var next = key.shift();
-        if ( key.length === 0 )
-            return value !== undefined ? obj[ next ] = value : obj[ next ];
-        if ( !obj[ next ] && value !== undefined ) obj[ next ] = isNaN( key[ 0 ] ) ? {} : [];
-        return recursive( obj[ next ], key, value );  // recursive call
-    }
-}
-
-function rangeFunc (data) {
-    return d3.extent(data, dataset => new Date(dataset.created_at));
-}
-
-function histogramFunc (data, domain, unit, value) {
-    if (!domain)
-        domain = d3.extent(data, dataset => new Date(dataset.created_at));
-    let x = d3.scaleTime().domain(domain);
-
-    // create histogram function
-    let histogram = d3.histogram()
-        .value(dataset => new Date(dataset.created_at))
-        .domain(domain)
-        .thresholds(x.ticks(unit, value));
-
-    return histogram(data);
-}
+importScripts("https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js");
+importScripts("./cmMonitorHelper.js");
 
 self.addEventListener("message", function (event) {
-    
+
     let colors = event.data.colors;
     let course = event.data.course;
     let data = event.data.data;
@@ -73,16 +14,7 @@ self.addEventListener("message", function (event) {
     let renderConfig = event.data.render;
     let sortConfig = event.data.sort;
     let subjectConfig = event.data.subject;
-    let timeRanges = new Map([
-        ["Heute", now => [new Date(moment(now).startOf("day")), now]],
-        ["Gestern", now => [new Date(moment().subtract(1, 'days').startOf('day')), new Date(moment().subtract(1, 'days').endOf('day'))]],
-        ["Letzten 24h", now => [new Date(moment(now).subtract(1, "day")), now]],
-        ["Letzten 48h", now => [new Date(moment(now).subtract(2, "day")), now]],
-        ["last 7d", now => [new Date(moment(now).subtract(1, "week")), now]],
-        ["last 14d", now => [new Date(moment(now).subtract(2, "week")), now]],
-        ["last month", now => [new Date(moment(now).subtract(1, "month")), now]],
-        ["last 2 month", now => [new Date(moment(now).subtract(2, "month")), now]]
-    ]);
+
     // assign log data
     data = data.log;
 
@@ -109,12 +41,12 @@ self.addEventListener("message", function (event) {
         data = data.filter(entry => jsonLogic.apply(filter, entry));
     }
     else if (rangeConfig.range === null) {
-        //data = helper.filterData(data, { range: helper.timeRanges.get("last 7d")(new Date) } );
-        data = data.filter(dataset => jsonLogic.apply({ range: timeRanges.get("last 7d")(new Date) }, dataset) );
+        //data = cmMonitorHelper.data.filter(data, { range: helper.timeRanges.get("last 7d")(new Date) } );
+        data = data.filter(dataset => jsonLogic.apply({ range: cmMonitorHelper.time.range.get("last 7d")(new Date) }, dataset) );
         rangeConfig.range = "last 7d";
     } else
-        //data = helper.filterData(data, { range: helper.timeRanges.get(rangeConfig.range)(new Date) } );
-        data = data.filter(dataset => jsonLogic.apply({ range: timeRanges.get(rangeConfig.range)(new Date) }, dataset) );
+        //data = cmMonitorHelper.data.filter(data, { range: helper.timeRanges.get(rangeConfig.range)(new Date) } );
+        data = data.filter(dataset => jsonLogic.apply({ range: cmMonitorHelper.time.range.get(rangeConfig.range)(new Date) }, dataset) );
 
     let subtitle;
 
@@ -145,10 +77,10 @@ self.addEventListener("message", function (event) {
     data = data.reduce((prev, curr) => {
         let key;
         if (groupByPrimary.indexOf(",") > 1)
-            key = deepValue(curr, groupByPrimary.split(",")[0]) ?
-                deepValue(curr, groupByPrimary.split(",")[0]) : deepValue(curr, groupByPrimary.split(",")[1]);
+            key = cmMonitorHelper.deepValue(curr, groupByPrimary.split(",")[0]) ?
+                cmMonitorHelper.deepValue(curr, groupByPrimary.split(",")[0]) : cmMonitorHelper.deepValue(curr, groupByPrimary.split(",")[1]);
         else
-            key =  deepValue(curr, groupByPrimary);
+            key =  cmMonitorHelper.deepValue(curr, groupByPrimary);
         if (!prev[key])
             prev[key] = [curr];
         else
@@ -170,11 +102,11 @@ self.addEventListener("message", function (event) {
             value = value.reduce((prev, curr) => {
                 let _secKey;
                 if (groupBySecondary.indexOf(",") > 1)
-                    _secKey = deepValue(curr, groupBySecondary.split(",")[0]) ?
-                        deepValue(curr, groupBySecondary.split(",")[0]) :
-                        deepValue(curr, groupBySecondary.split(",")[1]);
+                    _secKey = cmMonitorHelper.deepValue(curr, groupBySecondary.split(",")[0]) ?
+                        cmMonitorHelper.deepValue(curr, groupBySecondary.split(",")[0]) :
+                        cmMonitorHelper.deepValue(curr, groupBySecondary.split(",")[1]);
                 else
-                    _secKey =  deepValue(curr, groupBySecondary);
+                    _secKey =  cmMonitorHelper.deepValue(curr, groupBySecondary);
                 if (!y.includes(_secKey))
                     y.push(_secKey);
                 if (!prev.has(_secKey))
@@ -254,34 +186,22 @@ self.addEventListener("message", function (event) {
                     return prev + Array.from(curr[1]).reduce((p,c)=> p + c[1].length, 0);
                 }
                 settings = {
-                    "chart.type": "pie",
-                    "legend.enabled": true,
+                    "chart.type": "bar",
                     plotOptions: {
                         //series: { dataLabels: { enabled: true, format: '{point.name}: {point.y}x' } },
-                        pie: {
+                        series: {
+                            borderWidth: 0,
                             dataLabels: {
                                 enabled: true,
-                                distance: -50,
-                                style: {
-                                    fontWeight: 'bold',
-                                    color: 'white'
-                                }
-                            },
-                            startAngle: -90,
-                            endAngle: 90,
-                            center: ['52%', '100%'],
-                            size: '200%'
+                                format: '{point.y:.1f}%'
+                            }
                         }
                     },
+                    "xAxis.type": "category",
                     responsive: {
                         rules: [{
                             condition: { maxWidth: 500 },
                             chartOptions: {
-                                legend: {
-                                    align: 'center',
-                                    verticalAlign: 'bottom',
-                                    layout: 'horizontal'
-                                },
                                 xAxis: { "labels.step": 5 },
                                 credits: { enabled: false }
                             }
@@ -299,8 +219,6 @@ self.addEventListener("message", function (event) {
                     colorByPoint: true,
                     data: Array.from(data).map(element => ({
                         name: element[0],
-                        type: 'pie',
-                        innerSize: '50%',
                         tooltip: { valueDecimals: 2 },
                         drilldown: element[0],
                         y: Array.from(element[1])
@@ -325,8 +243,6 @@ self.addEventListener("message", function (event) {
                     series: Array.from(data).map(element => ({
                         name: element[0],
                         id: element[0],
-                        type: 'pie',
-                        innerSize: '50%',
                         tooltip: { valueDecimals: 2 },
                         data: Array.from(element[1]).map(drilled => [
                             drilled[0],

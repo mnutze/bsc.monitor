@@ -1,6 +1,4 @@
-importScripts("https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.min.js");
 importScripts("https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js");
-importScripts("https://mnutze.github.io/bsc.monitoring-courses/libs/js/logic.js");
 
 /** @from ccm.js
  * @summary get or set the value of a deeper object property
@@ -39,24 +37,6 @@ function deepValue ( obj, key, value ) {
     }
 }
 
-function rangeFunc (data) {
-    return d3.extent(data, dataset => new Date(dataset.created_at));
-}
-
-function histogramFunc (data, domain, unit, value) {
-    if (!domain)
-        domain = d3.extent(data, dataset => new Date(dataset.created_at));
-    let x = d3.scaleTime().domain(domain);
-
-    // create histogram function
-    let histogram = d3.histogram()
-        .value(dataset => new Date(dataset.created_at))
-        .domain(domain)
-        .thresholds(x.ticks(unit, value));
-
-    return histogram(data);
-}
-
 self.addEventListener("message", function (event) {
 
     let data = event.data.data;
@@ -67,7 +47,7 @@ self.addEventListener("message", function (event) {
     let lessons = course.lessons;
 
     if (!lessons) {
-        console.error("No Lessons available / defined");
+        console.error("No Units available / defined");
         self.postMessage({});
         return;
     }
@@ -155,7 +135,7 @@ self.addEventListener("message", function (event) {
             opposite: true
         }],
         "tooltip.shared": true,
-        "subtitle.text": "Logging incomplete! Started at 22. May 2019 (~Lesson 7)"
+        "subtitle.text": "Logging incomplete! Started at 22. May 2019 (~Unit 7)"
     };
 
     settings.series.push({

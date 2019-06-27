@@ -4,7 +4,7 @@ ccm.files["widget.team_members.js"] = function (data, instance) {
      */
     return {
         class: "cm-team-members",
-        inner: Object.keys(instance.teams.teams[instance.subject.values[0]].members)
+        inner: Object.keys(instance.course.teams[instance.subject.values[0]].members)
         .map(subject => ({
             tag: "p",
             class: "small",

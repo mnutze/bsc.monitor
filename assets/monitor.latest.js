@@ -25,7 +25,7 @@ ccm.files["monitor.latest.js"] = function (data, instance) {
     //data = helper.datetime.gt(data, instance.range.value);
 
     // filter data against rules
-    data = helper.filterData(data, instance.filter);
+    data = cmMonitorHelper.data.filter(data, instance.filter);
 
     // reverse data, so get newest data first
     data = data.reverse();

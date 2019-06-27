@@ -1,7 +1,6 @@
 ccm.files["monitor.accumulated_activities.js"] = function (data, instance) {
 
-    let $ = instance.ccm.helper,
-        helper = instance.helper;
+    let helper = instance.helper;
 
     // assign log data
     data = data.log;
@@ -22,13 +21,13 @@ ccm.files["monitor.accumulated_activities.js"] = function (data, instance) {
                 instance.filter.and.push(filter);
         });
 
-    let interval = helper.timeSlices.get("1w");
-    let domain = helper.datetime.range(data);
+    let interval = cmMonitorHelper.time.interval.get("1w");
+    let domain = cmMonitorHelper.time.domain(data);
 
     // filter data against rules
-    data = helper.filterData(data, instance.filter);
+    data = cmMonitorHelper.data.filter(data, instance.filter);
     // total histogram
-    let total = helper.datetime.histogram(data, domain, ...interval);
+    let total = cmMonitorHelper.time.histogram(data, domain, ...interval);
 
     data = data.reduce((prev, curr)=> {
         if (!prev[curr.user.user])
@@ -38,12 +37,12 @@ ccm.files["monitor.accumulated_activities.js"] = function (data, instance) {
         return prev;
     }, {});
 
-    data = Object.keys(data).map(subject => ({key: subject, data: helper.datetime.histogram(data[subject], domain, ...interval)}) );
+    data = Object.keys(data).map(subject => ({key: subject, data: cmMonitorHelper.time.histogram(data[subject], domain, ...interval)}) );
 
     data = data.map((subject, i) => {
         return {
             name: subject.key,
-            color: helper.colors[i % helper.colors.length],
+            color: cmMonitorHelper.colors[i % cmMonitorHelper.colors.length],
             data: subject.data.map((slice, j) => [Date.parse(moment(slice.x1).startOf("isoWeek")), slice.length !== 0 ? (slice.length / total[j].length * 100) : 0]),
             type: "line"
         }
@@ -56,7 +55,7 @@ ccm.files["monitor.accumulated_activities.js"] = function (data, instance) {
         "tooltip.headerFormat": "",
         series: data,
         "plotOptions.series.marker.enabled": false,
-        xAxis: { type: "datetime", labels: { format: 'KW-{value:%W}' } },
+        xAxis: { type: "datetime", labels: { format: 'W-{value:%W}' } },
         yAxis: { title: { text: "Percentage of Accumulated Events" }, max: 100, labels: { format: "{value} %" }, maxPadding: 0, startOnTick: true }
     };
 };
