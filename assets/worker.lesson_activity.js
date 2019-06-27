@@ -1,6 +1,6 @@
 importScripts("https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.2/d3.min.js");
 importScripts("https://mnutze.github.io/bsc.monitoring-courses/libs/js/logic.js");
-importScripts("./cmMonitorHelper.js");
+importScripts("https://mnutze.github.io/bsc.monitor/assets/cmMonitorHelper.js");
 
 self.addEventListener("message", function (event) {
 
