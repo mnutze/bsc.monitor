@@ -76,7 +76,13 @@ http://ricostacruz.com/cheatsheets/umdjs.html
             if ( !obj[ next ] && value !== undefined ) obj[ next ] = isNaN( key[ 0 ] ) ? {} : [];
             return recursive( obj[ next ], key, value );  // recursive call
         }
-    }
+    };
+
+    cmMonitorHelper.humanReadableSubject = function (course, subject) {
+        if (course && course.humanReadable && course.humanReadable.learners && course.humanReadable.learners[subject])
+            return course.humanReadable.learners[subject];
+        return subject;
+    };
 
     if (d3)
         cmMonitorHelper.time = {
