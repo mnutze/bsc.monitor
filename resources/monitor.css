@@ -116,3 +116,23 @@ nav label.open {
 		font-size: 80%;
 	}
 }
+
+/* force directed graph */
+.force-directed-control {
+	float: left;
+}
+
+.force-directed-control > div {
+	margin-top: 10px;
+}
+
+.force-directed-control > div > button, .force-directed-control > div > select {
+	font-size: 10px;
+	line-height: 10px;
+	height: 22px;
+}
+.force-directed-control > div > label {
+	font-size: 10px;
+	line-height: 10px;
+}
+

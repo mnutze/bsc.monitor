@@ -66,7 +66,7 @@ self.addEventListener("message", function (event) {
         groupBySecondary = groupByConfig.groupBy ? groupByConfig.groupBy.key : undefined,
         limit = limitConfig,
         sort = sortConfig === "Highest" ? d3.descending : d3.ascending,
-        chart = renderConfig.graph;
+        chart = renderConfig.type;
 
     if (groupByPrimary === "user.user" && subjectConfig.teams)
         groupByPrimary = subjectConfig.key;

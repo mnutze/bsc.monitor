@@ -32,7 +32,7 @@ ccm.files["monitor.course_activities.js"] = function (data, instance) {
         groupBySecondary = instance.groupBy.groupBy ? instance.groupBy.groupBy.key : undefined,
         limit = instance.limit,
         sort = instance.sort === "Highest" ? d3.descending : d3.ascending,
-        chart = instance.render.graph;
+        chart = instance.render.type;
 
     if (groupByPrimary === "user.user" && instance.subject.teams)
         groupByPrimary = instance.subject.key;

@@ -52,7 +52,7 @@ ccm.files["monitor.heatmap.js"] = function (data, instance) {
         ]]);
     }, []);
     delete learners._index;
-    console.log(data)
+
     return {
         "chart.type": "heatmap",
         "chart.marginLeft": 100,
