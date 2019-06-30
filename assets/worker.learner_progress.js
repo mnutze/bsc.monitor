@@ -60,7 +60,7 @@ self.addEventListener("message", function (event) {
         "chart.type": "bar",
         "tooltip.enabled": true,
         "tooltip.valueDecimals": 0,
-        "xAxis.categories": [ "Du", "Kurs" ],
+        "xAxis.categories": [ "You", "Course" ],
         "yAxis": {
             "title": { "text": ""},
             "min": 0,
@@ -89,10 +89,10 @@ self.addEventListener("message", function (event) {
         "plotOptions.bar.dataLabels.enabled": true,
         "credits.enabled": false,
         "series": [{
-            "name": "Übungspunkte",
+            "name": "Exercise Points",
             "data": [
-                ...Object.values(processed.subject).map(subj =>({name: "In Summe", y: subj, color: colors[colorCount++]})),
-                {name: "Im Durchschnitt", y: processed.course, dataLabels: { format: "{y:.2f}"}, color: colors[colorCount]}]
+                ...Object.values(processed.subject).map(subj =>({name: "Your Total", y: subj, color: colors[colorCount++]})),
+                {name: "Learners &Oslash;", y: processed.course, dataLabels: { format: "{y:.2f}"}, color: colors[colorCount]}]
         }]
     };
     // send processed to main thread

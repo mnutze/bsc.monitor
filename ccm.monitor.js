@@ -351,12 +351,17 @@
                     forceDirected: async data => {
                         // @TODO inspired by https://bl.ocks.org/mapio/53fed7d84cd1812d6a6639ed7aa83868
                         // @License GNU General Public License, version 3
-                        let width = { svg: self.size.width - 50 },
+                        let width = {svg: self.size.width - 50},
                             height = self.size.height - 50,
                             color = d3.scaleOrdinal(d3.schemeCategory10);
 
                         width.select = 200;
-                        width.svg -= width.select;
+                        //width.svg -= width.select;
+
+                        if (!data.nodes) {
+                            $.setContent(self.element.querySelector("#main"), "You did not communicate with others");
+                            return;
+                        }
 
                         let graph = data;
 
@@ -393,12 +398,11 @@
                             adjlist[d.target.index + "-" + d.source.index] = true;
                         });
 
-                        function neigh(a, b) {
-                            return a == b || adjlist[a + "-" + b];
-                        }
+                        let neigh = (a, b) => a === b || adjlist[a + "-" + b];
 
                         const div = document.createElement( 'div' );
-                        div.appendChild($.html({
+
+                        $.setContent(navContainer.options, $.html({
                             "id": "subject-selection",
                             "class": "force-directed-control",
                             "style": "width: " + width.select + "px;",
@@ -460,12 +464,12 @@
                             ]
                         }));
 
-                        div.querySelector("#subject-selection")
+                        navContainer.options.querySelector("#subject-selection")
                             .querySelector("#subject-type")
                             .addEventListener("change", function (event) {
-                                let subjectType = div.querySelector("#subject-selection")
+                                let subjectType = navContainer.options.querySelector("#subject-selection")
                                     .querySelector("#subjects");
-                                let subjects = div.querySelector("#subject-selection")
+                                let subjects = navContainer.options.querySelector("#subject-selection")
                                     .querySelector("#subjects");
                                 if (this.value === "course") {
                                     subjects.disabled = true;
@@ -500,19 +504,20 @@
                                         })));
                         });
 
-
-                        div.querySelector("#subject-selection")
+                        navContainer.options.querySelector("#subject-selection")
                             .querySelector("#apply-selection")
                             .addEventListener("click", function (event) {
-                                let subjects = Array.from(div.querySelector("#subjects").selectedOptions)
+                                let subjects = Array.from(navContainer.options.querySelector("#subjects").selectedOptions)
                                     .reduce((p,c) => p.concat(c.value), []);
-                                if (div.querySelector("#subject-type").value === "teams")
+                                if (navContainer.options.querySelector("#subject-type").value === "teams")
                                     subjects = subjects
                                         .reduce((p,c) => p.concat(Object.keys(self.course.teams[c].members)), []);
                                 subjects = { key: "user.user", values: subjects };
                                 self.subject = subjects;
                                 self.rerender();
                         });
+
+                        navContainer.filter.classList.add("hide");
 
                         div.appendChild(document.createElementNS("http://www.w3.org/2000/svg","svg"));
                         $.setContent( self.element.querySelector( "#main" ), div );
@@ -544,7 +549,12 @@
                             .data(graph.nodes)
                             .enter()
                             .append("circle")
-                            .attr("r", 5)
+                            .attr("r", function (d) {
+//                                console.log(self.subject, d.uid, d.id, d.group)
+                                if (self.subject && self.subject.values && self.subject.values.indexOf(d.uid) > -1)
+                                    return 10;
+                                return 5;
+                            })
                             .attr("fill", function(d) { return color(d.group); })
 
                         node.on("mouseover", focus).on("mouseout", unfocus);
@@ -562,9 +572,23 @@
                             .enter()
                             .append("text")
                             .text(function(d, i) { return i % 2 == 0 ? "" : d.node.id; })
-                            .style("fill", "#555")
+                            .style("fill", function (d) {
+                                if (self.subject && self.subject.values && self.subject.values.indexOf(d.node.uid) > -1)
+                                    return "#000";
+                                return "#555";
+                            })
                             .style("font-family", "Arial")
                             .style("font-size", 12)
+                            .style("font-size", function (d) {
+                                if (self.subject && self.subject.values && self.subject.values.indexOf(d.node.uid) > -1)
+                                    return 14;
+                                return 12;
+                            })
+                            .style("font-weight", function (d) {
+                                if (self.subject && self.subject.values && self.subject.values.indexOf(d.node.uid) > -1)
+                                    return "bold";
+                                return "normal";
+                            })
                             .style("pointer-events", "none"); // to prevent mouseover/drag capture
 
                         node.on("mouseover", focus).on("mouseout", unfocus);
@@ -597,10 +621,7 @@
 
                         }
 
-                        function fixna(x) {
-                            if (isFinite(x)) return x;
-                            return 0;
-                        }
+                        let fixna = x => isFinite(x) ? x : 0;
 
                         function focus(d) {
                             let index = d3.select(d3.event.target).datum().index;
@@ -651,8 +672,6 @@
                             d.fx = null;
                             d.fy = null;
                         }
-
-
                     },
                     highcharts: async data => {
                         if (self["no-rlt"] && !rerender)
@@ -814,6 +833,9 @@
                         if ($.isObject(self.render.highcharts))
                             settings = $.convertObjectKeys(Object.assign(settings, self.render.highcharts));
 
+                        //if (!self.interval && !self.range)
+                        //    settings.chart.marginTop = 20;
+
                         //console.log(settings); // @TODO remove debug print before live
                         if (!self.visualization) {
                             rerender = false;
@@ -832,10 +854,6 @@
                         }
                     },
                     none: data => {
-                        $.setContent( self.element.querySelector( "#main" ), "" );
-                    },
-                    multiple_tables: data => {
-                        //console.log(data);
                         $.setContent( self.element.querySelector( "#main" ), "" );
                     },
                     table: data => {
@@ -905,7 +923,12 @@
                                 { tag: "tr", inner: columns.order.map(td => $.format(self.templates.tables.td, {
                                         tdInner: function () {
                                             if (!columns[td].filter)
-                                                return setCell(subject, columns[td].key, td);
+                                                return [
+                                                    {
+                                                    tag: "span",
+                                                    class: "cm_table_cell",
+                                                    inner: setCell(subject, columns[td].key, td)
+                                                }];
                                             let value, __path = columns[td].key;
                                             if (columns[td].key.indexOf(",") > 1) {
                                                 if ($.deepValue(subject, columns[td].key.split(",")[0])) {

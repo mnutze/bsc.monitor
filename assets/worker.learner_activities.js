@@ -58,7 +58,7 @@ self.addEventListener("message", function (event) {
         "chart.type": "bar",
         "tooltip.enabled": true,
         "tooltip.valueDecimals": 0,
-        "xAxis.categories": [ "Übungen<br>bearbeitet", "Sonstige<br>Aktivitäten" ],
+        "xAxis.categories": [ "Worked on<br>Exercises", "Other<br>Activities" ],
         "yAxis": {
             "title": { "text": ""},
             "min": 0,
@@ -71,14 +71,17 @@ self.addEventListener("message", function (event) {
         "plotOptions.bar.dataLabels.enabled": true,
         "credits.enabled": false,
         "series": [...Object.keys(subjects).map(subj => ({
-            "name": "Du",
-            "data": [{name: "In Summe", y: exercise_submits.subjects[subj]}, {name: "In Summe", y: ohterActivities.subjects[subj]}]
+            "name": "You",
+            "data": [
+                { name: "Your \u2140", y: exercise_submits.subjects[subj] },
+                { name: "Your \u2140", y: ohterActivities.subjects[subj] }
+            ]
         })),
         {
-            "name": "Kurs",
+            "name": "Course",
             "data": [
-                {name: "Im Durchschnitt", dataLabels: { format: "{y:.2f}"}, y: exercise_submits.learners},
-                {name: "Im Durchschnitt", dataLabels: { format: "{y:.2f}"}, y: ohterActivities.learners}
+                { name: "Learners \u00D8", dataLabels: { format: "{y:.2f}"}, y: exercise_submits.learners },
+                { name: "Learners \u00D8", dataLabels: { format: "{y:.2f}"}, y: ohterActivities.learners }
             ]
         }]
     };

@@ -135,7 +135,7 @@ self.addEventListener("message", function (event) {
             opposite: true
         }],
         "tooltip.shared": true,
-        "subtitle.text": "Logging incomplete! Started at 22. May 2019 (~Unit 7)"
+        //"subtitle.text": "Logging incomplete! Started at 22. May 2019 (~Unit 7)"
     };
 
     settings.series.push({

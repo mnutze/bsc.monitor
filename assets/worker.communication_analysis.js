@@ -8,30 +8,7 @@ self.addEventListener("message", function (event) {
     let course = event.data.course;
     let data = event.data.data;
     let subject = event.data.subject;
-    let highcharts = {
-        "chart.type": "networkgraph",
-        "title.text": "",
-        "subtitle.text": "",
-        "plotOptions": {
-            "networkgraph": {
-                "keys": [ "from", "to" ],
-                "layoutAlgorithm": {
-                    "enableSimulation": true,
-                    "friction": -0.9,
-                    "linkLength": 30
-                }
-            }
-        },
-        "series": [{
-            turboThreshold: 1000,
-            marker: {
-                radius: 10
-            },
-            "dataLabels.enabled": true,
-            "dataLabels.linkFormat": "",
-            "data": []
-        }]
-    };
+
     // assign log data
     data = data.communication_log;
 
@@ -52,10 +29,16 @@ self.addEventListener("message", function (event) {
         }, dataset));
     }
 
+
+    if (!data[0]) {
+        self.postMessage({});
+        return;
+    }
+
     let nodes = {};
     let statistics = data.filter(d => d.parent.id && d.user.user).reduce((prev, curr) => {
         if (!nodes[curr.user.user])
-            nodes[curr.user.user] = { id: course.humanReadable.learners[curr.user.user], group: course.learners[curr.user.user] };
+            nodes[curr.user.user] = { id: course.humanReadable.learners[curr.user.user], uid: curr.user.user, group: course.learners[curr.user.user] };
         if (!prev[curr.parent.id])
             prev[curr.parent.id] = { posts: 1, members:{ [curr.user.user]: 1 }};
         else if (!prev[curr.parent.id].members[curr.user.user]) {
@@ -69,8 +52,8 @@ self.addEventListener("message", function (event) {
         return prev;
     },{});
 
-    let fromTo = []
-    let links = []
+    let fromTo = [];
+    let links = [];
     Object.keys(statistics)
         .map(chat => Object.keys(statistics[chat].members).map(member =>
             Object.keys(statistics[chat].members)
@@ -86,13 +69,10 @@ self.addEventListener("message", function (event) {
                     }
                 } )));
 
-    let seriesData = []
     let network = links.reduce((prev, curr) => {
-        seriesData.push({from: curr.link.split(",")[0], to: curr.link.split(",")[1]})
         prev.links.push({source: curr.link.split(",")[0], target: curr.link.split(",")[1], chat: curr.chat, value: 1});
         return prev;
     }, { links: [], nodes: Object.values(nodes)});
 
-    highcharts.series[0].data = seriesData;
     self.postMessage(network);
 }, false);

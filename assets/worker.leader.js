@@ -138,6 +138,7 @@ self.addEventListener("message", function (event) {
         "plotOptions.series.stacking": "normal",
         "yAxis.min": 0,
         "subtitle.text": subtitle,
+        "subtitle.align": "right",
         "subtitle.style": { fontWeight: "bold" },
         "tooltip.shared": true,
         "chart.type": chart,
@@ -207,6 +208,7 @@ self.addEventListener("message", function (event) {
                             }
                         }]
                     },
+                    "subtitle.align": "right",
                     "subtitle.text": subtitle,
                     "subtitle.style": { fontWeight: "bold" },
                     tooltip: {

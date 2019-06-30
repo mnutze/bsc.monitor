@@ -80,6 +80,7 @@ self.addEventListener("message", function (event) {
     self.postMessage({
         "chart.type": "scatter",
         "subtitle.text": "<b>" + weekLabel + "</b><br/>" + classificationLegend,
+        "subtitle.align": "right",
         xAxis: {
             gridLineWidth: 0,
             title: { enabled: true, text: "\u2140 Activities - " + weekLabel, offset: 25 },
@@ -93,8 +94,8 @@ self.addEventListener("message", function (event) {
             plotLines: [
                 { color: "#ccc", value: maxY/2, width: 1 },
                 { value: 0, label: { text: "<b>Q4</b>", useHTML: true, align: 'right', x: -5, y: -10 } },
-                { value: maxY, label: { text: "<b>Q1</b>", useHTML: true, align: 'right', x: -5, y: -10 } },
-                { value: maxY, label: { text: "<b>Q2</b>", useHTML: true, x: -5, y: -10 } },
+                { value: maxY, label: { text: "<b>Q1</b>", useHTML: true, align: 'right', x: -5, y: -5 } },
+                { value: maxY, label: { text: "<b>Q2</b>", useHTML: true, x: -5, y: -5 } },
                 { value: 0, label: { text: "<b>Q3</b>", useHTML: true, x: -5, y: -10 } }
             ],
         },

@@ -12,8 +12,8 @@ ccm.files["monitor.latest.js"] = function (data, instance) {
         instance.filter = { and: [ {} ] };
 
     let subjectFilter;
-    if (instance.subject && instance.subject.values.length > 0)
-        subjectFilter = instance.subject.values.map(subject => ({ "===" : [ { var : instance.subject.key }, subject ] }) );
+    if (instance.subject && instance.subject.values && instance.subject.values.length > 0)
+        subjectFilter = [{ "or": instance.subject.values.map(subject => ({ "===" : [ { var : instance.subject.key }, subject ] }) ) }];
 
     if (subjectFilter)
         subjectFilter.forEach(filter => {

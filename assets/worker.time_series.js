@@ -9,7 +9,8 @@ self.addEventListener("message", function (event) {
     let range = event.data.range;
     let render = event.data.render;
     let subject = event.data.subject;
-    let teams = event.data.course.teams;
+    let course = event.data.course;
+    let teams = course.teams;
 
     // assign log data
     data = data.log;
@@ -40,12 +41,13 @@ self.addEventListener("message", function (event) {
         },{});
 
         aggregated = Object.entries(aggregated).map((day, i) => ({
-            type: "spline", name: day[0], yAxis: 0,
+            type: "spline", name: day[0] + "s", yAxis: 0,
             color: cmMonitorHelper.colors[i % cmMonitorHelper.colors.length],
             data: Object.assign({},...d3.nest().key(datum => new Date(datum.created_at).getHours())
                 .entries(day[1]).map(hour => ({[hour.key]: hour.values.length})))
 
         }));
+        console.log(aggregated)
         let week = [];
 
         for (let i = 0; i < 24; i++) {
@@ -61,17 +63,18 @@ self.addEventListener("message", function (event) {
 
         self.postMessage({
             "xAxis.labels.format": "{value}:00",
+            "subtitle.align": "right",
             "subtitle.text": range.range,
             "subtitle.style": { fontWeight: "bold" },
             yAxis: [
-                { title: { text: "total-activity/h at weekday" } },
+                { title: { text: "\u2140 Activites\\h" } },
                 //{ title: { text: "Events per h at week" }, opposite: true }
             ],
             series: [
                 //{type: "column", dashStyle: 'shortdot', yAxis: 1, color: "#ccc", name: "week", data: week},
                 ...aggregated
             ], "plotOptions.series.marker.enabled": false,
-            "tooltip.headerFormat": "<span style=\"font-size:11px; font-weight: bold;\">{point.key}:00</span><br>",
+            "tooltip.headerFormat": "<span style=\"font-size:11px; font-weight: bold;\">Activities at {point.key}:00</span><br>",
             tooltip: { enabled: true, shared: true}
         });
     }
@@ -92,18 +95,20 @@ self.addEventListener("message", function (event) {
         let wanted = subject.values.map(key => data.filter(dataset => cmMonitorHelper.deepValue(dataset, subject.key) === key));
 
         let selected = wanted.map((filtered, i) => ({
-            name: subject.key !== "team" ? subject.values[i] : teams[subject.values[i]].name,
+            name: subject.key !== "team" ? cmMonitorHelper.humanReadableSubject(course, subject.values[i]) : teams[subject.values[i]].name,
             color: cmMonitorHelper.colors[i % cmMonitorHelper.colors.length],
             data: cmMonitorHelper.time.histogram(filtered, domain, ...interval).map(range => [Date.parse(range.x1), range.length]),
             type: "spline",
-            yAxis: 1,
+
         }));
 
         let distinct = [];
         let distinctCount = {
-            name: "distinct Learner",
+            name: "Learners active \u2140",
             type: "column",
             color: "#ff0000",
+            "tooltip.valueDecimals": 0,
+            yAxis: 1,
             data: cmMonitorHelper.time.histogram(data, domain, ...interval).map(range => {
                 distinct = [];
                 return [Date.parse(range.x1), range
@@ -118,12 +123,13 @@ self.addEventListener("message", function (event) {
         };
 
         let avg = {
-            name: "avg per Learner",
+            name: "Learners \u00D8",
             type: "areaspline",
             color: "#000",
             fillColor: "#ccc",
             fillOpacity: 0.7,
             lineWidth: .5,
+            "tooltip.useHTML": true,
             dashStyle: "LongDash",
             states: { hover: { lineWidth: .5}},
             data: cmMonitorHelper.time.histogram(data, domain, ...interval).map(range => [Date.parse(range.x1),
@@ -136,12 +142,28 @@ self.addEventListener("message", function (event) {
             "tooltip.shared": true,
             series: [].concat(avg, distinctCount, selected),
             "plotOptions.series.marker.enabled": false,
+            "subtitle.align": "right",
             "subtitle.text": range.range,
             "subtitle.style": { fontWeight: "bold" },
             "xAxis.type": "datetime",
             yAxis: [
-                { title: { text: 'avg count \\ ' + event.data.interval.current } },
-                { title: { text: "total count \\ " + event.data.interval.current }, opposite: true }
+                { title: { text: 'Activities \\ ' + event.data.interval.current, "useHTML": true } },
+                {
+                    title: {
+                        text: "&#8721; Learners \\ " + event.data.interval.current,
+                        "useHTML": true,
+                        style: {
+                            color: "#ff0000"
+                        }
+                    },
+                    labels: {
+                        format: '{value}',
+                        style: {
+                            color: "#ff0000"
+                        }
+                    },
+                    opposite: true
+                }
             ]
         });
     }

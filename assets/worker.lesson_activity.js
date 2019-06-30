@@ -70,23 +70,23 @@ self.addEventListener("message", function (event) {
     };
 
     log = log.filter(entry => jsonLogic.apply(filter, entry));
-    let histogram = cmMonitorHelper.time.histogram(log, cmMonitorHelper.time.domain(log), d3.timeHour, 2);
+    let histogram = cmMonitorHelper.time.histogram(log, cmMonitorHelper.time.domain(log), ...cmMonitorHelper.time.interval.get(interval.current));
 
     let processed = {
         activities: {
-            name: "all Activities",
+            name: "\u2140 Activities",
             type: "column",
             color: colors[0],
             data: []
         },
         submits: {
-            name: "Submits",
+            name: "\u2140 Submits",
             type: "column",
             color: colors[6],
             data: []
         },
         learners_online: {
-            name: "Learners online",
+            name: "\u2140 Learners online",
             type: "areaspline",
             color: "#000",
             fillColor: "#ccc",
@@ -119,12 +119,13 @@ self.addEventListener("message", function (event) {
             "tooltip.shared": true,
             series: [ processed.learners_online, processed.activities, processed.submits ],
             "plotOptions.series.marker.enabled": false,
+            "subtitle.align": "right",
             "subtitle.text": range.current[Object.keys(range.current)[0]].label,
             "subtitle.style": { fontWeight: "bold" },
             "xAxis.type": "datetime",
             yAxis: [
                 { title: { text: 'activities \\ ' + interval.current } },
-                { title: { text: "learners online \\ " + interval.current }, opposite: true }
+                { title: { text: "learners \\ " + interval.current }, opposite: true }
             ]
         });
 }, false);

@@ -41,7 +41,7 @@ ccm.files["monitor.accumulated_activities.js"] = function (data, instance) {
 
     data = data.map((subject, i) => {
         return {
-            name: subject.key,
+            name: cmMonitorHelper.humanReadableSubject(instance.course, subject.key),
             color: cmMonitorHelper.colors[i % cmMonitorHelper.colors.length],
             data: subject.data.map((slice, j) => [Date.parse(moment(slice.x1).startOf("isoWeek")), slice.length !== 0 ? (slice.length / total[j].length * 100) : 0]),
             type: "line"
@@ -56,6 +56,6 @@ ccm.files["monitor.accumulated_activities.js"] = function (data, instance) {
         series: data,
         "plotOptions.series.marker.enabled": false,
         xAxis: { type: "datetime", labels: { format: 'W-{value:%W}' } },
-        yAxis: { title: { text: "Percentage of Accumulated Events" }, max: 100, labels: { format: "{value} %" }, maxPadding: 0, startOnTick: true }
+        yAxis: { title: { text: "Member-Activities in %" }, max: 100, labels: { format: "{value} %" }, maxPadding: 0, startOnTick: true }
     };
 };
