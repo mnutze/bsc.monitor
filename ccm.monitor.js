@@ -108,7 +108,7 @@
                 await self.ccm.load("https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.13/moment-timezone-with-data-2012-2022.min.js");
 
                 // load jsonLogic only once
-                !window.cmMonitorHelper && await self.ccm.load("./assets/cmMonitorHelper.js");
+                !window.cmMonitorHelper && await self.ccm.load("https://mnutze.github.io/bsc.monitor/assets/cmMonitorHelper.js");
 
                 Highcharts.dateFormats = {
                     W: function (timestamp) {
