@@ -47,7 +47,7 @@ self.addEventListener("message", function (event) {
                 .entries(day[1]).map(hour => ({[hour.key]: hour.values.length})))
 
         }));
-        console.log(aggregated)
+
         let week = [];
 
         for (let i = 0; i < 24; i++) {
