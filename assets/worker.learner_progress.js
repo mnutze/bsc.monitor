@@ -78,7 +78,7 @@ self.addEventListener("message", function (event) {
                     "dashStyle": "LongDash",
                     "label": {
                         "rotation": 0,
-                        "text": "98 Points needed<br>for exam admission",
+                        "text": course.min + " Points needed<br>for exam admission",
                         "y": event.data.size ? (event.data.size.height - 50) / 2 : undefined,
                         "x": -10,
                         "align": "right"
@@ -92,7 +92,7 @@ self.addEventListener("message", function (event) {
             "name": "Exercise Points",
             "data": [
                 ...Object.values(processed.subject).map(subj =>({name: "Your Total", y: subj, color: colors[colorCount++]})),
-                {name: "Learners &Oslash;", y: processed.course, dataLabels: { format: "{y:.2f}"}, color: colors[colorCount]}]
+                {name: "Learners \u00D8", y: processed.course, dataLabels: { format: "{y:.2f}"}, color: colors[colorCount]}]
         }]
     };
     // send processed to main thread
