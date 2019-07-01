@@ -97,7 +97,7 @@
                                 render()[self.render.key](data);
                         }, false);
                     } catch (e) {
-                        self.worker = createWorkerFallback(workerUrl);
+                        self.worker = createWorkerFallback(self.worker);
                     }
 
                 // make sure that "highcharts.js" library is executed only once
