@@ -74,18 +74,32 @@
             let $, navContainer, time, rerender = true;
 
             this.init = async () => {
-                
-                if (self.worker) {
-                    self.worker = new Worker(self.worker);
-                    self.worker.addEventListener('message', function(event) {
-                        let data = event.data;
-                        if (self["no-rlt"] && !rerender)
-                            return;
 
-                        if (data)
-                            render()[self.render.key](data);
-                    }, false);
-                }
+
+                if (self.worker)
+                    try {
+                        let workerUrl = self.worker;
+                        if (testSameOrigin(workerUrl)) {
+                            self.worker = new Worker(workerUrl);
+                            self.worker.onerror = function (event) {
+                                event.preventDefault();
+                                self.worker = createWorkerFallback(workerUrl);
+                            };
+                        } else {
+                            self.worker = createWorkerFallback(workerUrl);
+                        }
+                        self.worker.addEventListener('message', function(event) {
+                            let data = event.data;
+                            if (self["no-rlt"] && !rerender)
+                                return;
+
+                            if (data)
+                                render()[self.render.key](data);
+                        }, false);
+                    } catch (e) {
+                        self.worker = createWorkerFallback(workerUrl);
+                    }
+
                 // make sure that "highcharts.js" library is executed only once
                 !window.Highcharts && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/exporting.js" );
@@ -1083,6 +1097,35 @@
                     },
                     sizeOf: value => debug().typeSizes[typeof value](value)
                 }
+            }
+
+            // cross-origin worker around
+            // https://benohead.com/cross-domain-cross-browser-web-workers/
+            function createWorkerFallback (workerUrl) {
+                let worker = null;
+                try {
+                    let blob;
+                    try {
+                        blob = new Blob(["importScripts('" + workerUrl + "');"], { "type": 'application/javascript' });
+                    } catch (e) {
+                        let blobBuilder = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
+                        blobBuilder.append("importScripts('" + workerUrl + "');");
+                        blob = blobBuilder.getBlob('application/javascript');
+                    }
+                    let url = window.URL || window.webkitURL;
+                    let blobUrl = url.createObjectURL(blob);
+                    worker = new Worker(blobUrl);
+                } catch (e1) {
+                    //if it still fails, there is nothing much we can do
+                }
+                return worker;
+            }
+
+            function testSameOrigin (url) {
+                let loc = window.location;
+                let a = document.createElement('a');
+                a.href = url;
+                return a.hostname === loc.hostname && a.port === loc.port && a.protocol === loc.protocol;
             }
         }
 
