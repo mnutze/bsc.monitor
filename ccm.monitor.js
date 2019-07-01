@@ -888,7 +888,8 @@
                                                 self.course.humanReadable.learners[$.deepValue(dataset, key)] :
                                                 $.deepValue(dataset, key) : $.deepValue(dataset, key),
                                         onclick: function (event) {
-                                            self.parent.fromChild.panel(dataset.key, self.subject, !!self.teams);
+                                            if (self.parent && self.parent.createBoardPanel)
+                                                self.parent.createBoardPanel(dataset.key, self.subject, !!self.teams);
                                         }
                                 };
                                 if (link === "learner")
@@ -1099,8 +1100,8 @@
                 }
             }
 
-            // cross-origin worker around
-            // https://benohead.com/cross-domain-cross-browser-web-workers/
+            /** work around for cross domain web(shared) workers
+             * https://benohead.com/cross-domain-cross-browser-web-workers/ */
             function createWorkerFallback (workerUrl) {
                 let worker = null;
                 try {

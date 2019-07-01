@@ -1,6 +1,9 @@
 ccm.files["widget.team_members.js"] = function (data, instance) {
     /*
-    onclick: function () { instance.parent.fromChild.panel(subject, { key: "user.user", values: [subject] }); }
+    onclick: function () {
+        if (self.parent && self.parent.createBoardPanel)
+            self.parent.createBoardPanel(dataset.key, self.subject, !!self.teams);
+    }
      */
     return {
         class: "cm-team-members",
