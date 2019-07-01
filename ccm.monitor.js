@@ -794,6 +794,7 @@
                                 }
                             },
                             colors: cmMonitorHelper.colors,
+                            credits: { enabled: false },
                             "exporting.buttons.contextButton.enabled": false,
                             legend: {
                                 enabled: false,
