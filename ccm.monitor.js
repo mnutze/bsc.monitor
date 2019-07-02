@@ -325,7 +325,7 @@
 
                 let data = self.data;
 
-                console.debug("processing " + debug().sizeOf(data) + " bytes");
+                //console.debug("processing " + debug().sizeOf(data) + " bytes");
 
                 if (self.worker)
                     self.worker.postMessage({
