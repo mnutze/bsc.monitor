@@ -9,6 +9,7 @@ self.addEventListener("message", function (event) {
     let lessons = course.lessons;
     let colors = event.data.colors;
     let subject = event.data.subject;
+    let profile = event.data.profile;
 
     if (!lessons) {
         console.error("No Units available / defined");
@@ -60,7 +61,12 @@ self.addEventListener("message", function (event) {
         "chart.type": "bar",
         "tooltip.enabled": true,
         "tooltip.valueDecimals": 0,
-        "xAxis.categories": [ "You", "Course" ],
+        "xAxis.categories": [
+            ...Object.keys(processed.subject).map(subj => {
+                if (subj === profile.user)
+                    return "You";
+                return course.humanReadable.learners[subj] ? course.humanReadable.learners[subj] : subj;
+            }), "Course" ],
         "yAxis": {
             "title": { "text": ""},
             "min": 0,
@@ -91,7 +97,16 @@ self.addEventListener("message", function (event) {
         "series": [{
             "name": "Exercise Points",
             "data": [
-                ...Object.values(processed.subject).map(subj =>({name: "Your Total", y: subj, color: colors[colorCount++]})),
+                ...Object.entries(processed.subject).map(subj =>{
+                    if (subj[0] === profile.user)
+                        return {name: "Your Total", y: subj[1], color: colors[colorCount++]};
+                    return {
+                        name: course.humanReadable.learners[subj[0]] ?
+                            (course.humanReadable.learners[subj[0]] + " Total") : (subj[0] + " Total"),
+                        y: subj[1],
+                        color: colors[colorCount++]
+                    };
+                }),
                 {name: "Learners \u00D8", y: processed.course, dataLabels: { format: "{y:.2f}"}, color: colors[colorCount]}]
         }]
     };
