@@ -25,8 +25,8 @@ http://ricostacruz.com/cheatsheets/umdjs.html
     let cmMonitorHelper = {};
     
     cmMonitorHelper.colors = [
-        "#00698B", "#d62728", "#000000", "#6ea03c", "#7c7c7c", "#E46C16",
-        "#9A4483","#F0BD00",   "#8c564b",
+        "#00698B", "#6ea03c", "#7c7c7c", "#E46C16",
+        "#9A4483","#F0BD00", "#d62728",  "#8c564b",
         "#17becf", "#2ca02c", "#ff7f0e", "#9467bd",
         "#1f77b4", "#bcbd22"
     ];
