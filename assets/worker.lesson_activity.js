@@ -33,6 +33,7 @@ self.addEventListener("message", function (event) {
         if (Array.isArray(range.current))
             range.current = { [range.current[0]]: range.current[1] };
     }
+    console.log(range.current)
 
     let filter = Object.keys(range.current[Object.keys(range.current)[0]].content).reduce((prev, curr) => {
         prev.push({ "===": [ { var : "parent.descr" }, curr ] });
