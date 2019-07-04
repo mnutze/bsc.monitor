@@ -28,13 +28,11 @@ self.addEventListener("message", function (event) {
         let today = new Date();
         range.current = Object.entries(lessons)
             .filter(lesson => (today > new Date(lesson[1].start) && (today < new Date(lesson[1].deadline))))[0];
-        console.log(range.current)
         if (!range.current)
-            range.current = lessons[Object.keys(lessons)[Object.keys(lessons).length-1]];
+            range.current = {[Object.keys(lessons)[Object.keys(lessons).length-1]]: lessons[Object.keys(lessons)[Object.keys(lessons).length-1]]};
         if (Array.isArray(range.current))
             range.current = { [range.current[0]]: range.current[1] };
     }
-    console.log(range.current)
 
     let filter = Object.keys(range.current[Object.keys(range.current)[0]].content).reduce((prev, curr) => {
         prev.push({ "===": [ { var : "parent.descr" }, curr ] });
