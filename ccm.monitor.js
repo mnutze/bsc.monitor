@@ -374,50 +374,6 @@
                         width.select = 200;
                         //width.svg -= width.select;
 
-                        if (!data.nodes) {
-                            $.setContent(self.element.querySelector("#main"), "You did not communicate with others");
-                            return;
-                        }
-
-                        let graph = data;
-
-                        let label = {
-                            'nodes': [],
-                            'links': []
-                        };
-
-                        graph.nodes.forEach(function(d, i) {
-                            label.nodes.push({node: d});
-                            label.nodes.push({node: d});
-                            label.links.push({
-                                source: i * 2,
-                                target: i * 2 + 1
-                            });
-                        });
-
-                        let labelLayout = d3.forceSimulation(label.nodes)
-                            .force("charge", d3.forceManyBody().strength(-50))
-                            .force("link", d3.forceLink(label.links).distance(0).strength(2));
-
-                        let graphLayout = d3.forceSimulation(graph.nodes)
-                            .force("charge", d3.forceManyBody().strength(-3000))
-                            .force("center", d3.forceCenter(width.svg / 2, height / 2))
-                            .force("x", d3.forceX(width.svg / 2).strength(1))
-                            .force("y", d3.forceY(height / 2).strength(1))
-                            .force("link", d3.forceLink(graph.links).id(function(d) {return d.id; }).distance(50).strength(1))
-                            .on("tick", ticked);
-
-                        let adjlist = [];
-
-                        graph.links.forEach(function(d) {
-                            adjlist[d.source.index + "-" + d.target.index] = true;
-                            adjlist[d.target.index + "-" + d.source.index] = true;
-                        });
-
-                        let neigh = (a, b) => a === b || adjlist[a + "-" + b];
-
-                        const div = document.createElement( 'div' );
-
                         $.setContent(navContainer.options, $.html({
                             "id": "subject-selection",
                             "class": "force-directed-control",
@@ -534,7 +490,51 @@
                         });
 
                         navContainer.filter.classList.add("hide");
+                        
+                        if (!data.nodes) {
+                            $.setContent(self.element.querySelector("#main"), "You did not communicate with others");
+                            return;
+                        }
 
+                        let graph = data;
+
+                        let label = {
+                            'nodes': [],
+                            'links': []
+                        };
+
+                        graph.nodes.forEach(function(d, i) {
+                            label.nodes.push({node: d});
+                            label.nodes.push({node: d});
+                            label.links.push({
+                                source: i * 2,
+                                target: i * 2 + 1
+                            });
+                        });
+
+                        let labelLayout = d3.forceSimulation(label.nodes)
+                            .force("charge", d3.forceManyBody().strength(-50))
+                            .force("link", d3.forceLink(label.links).distance(0).strength(2));
+
+                        let graphLayout = d3.forceSimulation(graph.nodes)
+                            .force("charge", d3.forceManyBody().strength(-3000))
+                            .force("center", d3.forceCenter(width.svg / 2, height / 2))
+                            .force("x", d3.forceX(width.svg / 2).strength(1))
+                            .force("y", d3.forceY(height / 2).strength(1))
+                            .force("link", d3.forceLink(graph.links).id(function(d) {return d.id; }).distance(50).strength(1))
+                            .on("tick", ticked);
+
+                        let adjlist = [];
+
+                        graph.links.forEach(function(d) {
+                            adjlist[d.source.index + "-" + d.target.index] = true;
+                            adjlist[d.target.index + "-" + d.source.index] = true;
+                        });
+
+                        let neigh = (a, b) => a === b || adjlist[a + "-" + b];
+
+                        const div = document.createElement( 'div' );
+                        
                         div.appendChild(document.createElementNS("http://www.w3.org/2000/svg","svg"));
                         $.setContent( self.element.querySelector( "#main" ), div );
 
