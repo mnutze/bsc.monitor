@@ -27,8 +27,8 @@ self.addEventListener("message", function (event) {
             let today = new Date();
             rangeConfig.current = Object.entries(lessons)
                 .filter(lesson => (today > new Date(lesson[1].start) && (today < new Date(lesson[1].deadline))))[0];
-            if (rangeConfig.current.length < 1)
-                rangeConfig.current = lessons[Object.keys(lessons)[Object.keys(lessons).length-1]];
+            if (!rangeConfig.current)
+                rangeConfig.current = {[Object.keys(lessons)[Object.keys(lessons).length-1]]: lessons[Object.keys(lessons)[Object.keys(lessons).length-1]]};
             if (Array.isArray(rangeConfig.current))
                 rangeConfig.current = { [rangeConfig.current[0]]: rangeConfig.current[1] };
         }
