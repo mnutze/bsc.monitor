@@ -104,7 +104,7 @@ self.addEventListener("message", function (event) {
 
         let distinct = [];
         let distinctCount = {
-            name: "Learners active \u2140",
+            name: subject.key === "team" ? "Teams active \u2140" : "Learners active \u2140",
             type: "column",
             color: "#ff0000",
             "tooltip.valueDecimals": 0,
@@ -123,7 +123,7 @@ self.addEventListener("message", function (event) {
         };
 
         let avg = {
-            name: "Learners \u00D8",
+            name: subject.key === "team" ? "Activities\\Team \u00D8" : "Activities\\Learner \u00D8",
             type: "areaspline",
             color: "#000",
             fillColor: "#ccc",

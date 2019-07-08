@@ -36,9 +36,10 @@ ccm.files["monitor.kanban.js"] = function (data, instance) {
         "tooltip.shared": true,
         series: []
     };
+    let log, interval, domain;
     switch (instance.options) {
         case "cfd":
-            let log = data.log;
+            log = data.log;
             log = log.filter(dataset => jsonLogic.apply({ and: [
                 {"===" : [ { var : "parent.name" }, "kanban_board" ] },
                 {"!==" : [ { var : "event" }, "drag" ] },
@@ -50,8 +51,8 @@ ccm.files["monitor.kanban.js"] = function (data, instance) {
             });
             log = log.reverse();
 
-            let interval = cmMonitorHelper.time.interval.get("1d");
-            let domain = cmMonitorHelper.time.domain(log);
+            interval = cmMonitorHelper.time.interval.get("1d");
+            domain = cmMonitorHelper.time.domain(log);
 
             let lanes = {};
             let cfd = log.reduce((prev, curr) => {
@@ -81,12 +82,12 @@ ccm.files["monitor.kanban.js"] = function (data, instance) {
             histogram.forEach((slot, id) => slot.length === 0 ?
                 histogram[id] = [Date.parse(slot.x0), histogram[id-1][1]] : histogram[id] = [Date.parse(slot.x0), slot[slot.length-1].lanes]);
 
-            histogram = Object.keys(lanes).reverse().map(lane => {
-                return { name: lane, data: histogram.reduce((prev, curr) => prev.concat([[curr[0],curr[1][lane]]]), []) }
+            histogram = Object.keys(lanes).map((lane, index) => {
+                return { name: instance.course.kanban.lanes[index], data: histogram.reduce((prev, curr) => prev.concat([[curr[0],curr[1][lane]]]), []) }
             });
             //console.log(cfd, histogram);
 
-
+            //settings["yAxis.categories"] = Object.keys(lanes);
 
             settings.series = Object.keys(lanes).reverse().map(lane => {
                 return { name: lane, data: cfd.reduce((prev, curr) => prev.concat([[Date.parse(curr.date),curr.lanes[lane]]]), [])}
@@ -95,6 +96,48 @@ ccm.files["monitor.kanban.js"] = function (data, instance) {
             break;
         case "overview":
 
+            break;
+        case "distribution":
+            log = data.log;
+            log = log.filter(dataset => jsonLogic.apply({ or: [
+                {"===" : [ { var : "parent.name" }, "kanban_board" ] },
+                {"===" : [ { var : "parent.name" }, "kanban_card" ] }
+                ] }, dataset));
+
+            log = log.sort(function(a,b){
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+            log = log.reverse();
+
+            interval = cmMonitorHelper.time.interval.get("1d");
+            domain = cmMonitorHelper.time.domain(log);
+            let reduced = log.reduce((prev, card) => {
+                if (card.parent.name === "kanban_board" && card.event === "add")
+                    if (card.data && card.data.data[2].data.key)
+                        prev.added.cards[card.data.data[2].data.key] = [card];
+                    else
+                        prev.added.undefined.push(card);
+                else if (card.parent.name === "kanban_board" && card.data && card.data.data[2].data.key && !prev.cards[card.data.data[2].data.key]) {
+                    if (prev.added.cards[card.data.data[2].data.key]) {
+                        prev.cards[card.data.data[2].data.key] = [prev.added.cards[card.data.data[2].data.key], card];
+                        delete prev.added.cards[card.data.data[2].data.key];
+                    } else
+                        prev.cards[card.data.data[2].data.key] = [prev.added.undefined.shift(), card];
+                }
+                else if (card.parent.name === "kanban_board" && card.data && card.data.data[2].data.key && prev.cards[card.data.data[2].data.key])
+                    prev.cards[card.data.data[2].data.key].push(card);
+                else if (card.parent.name === "kanban_card" && card.parent && card.parent.id && !prev.cards[card.parent.id])
+                    if (prev.added.cards[card.parent.id]) {
+                        prev.cards[card.parent.id] = [prev.added.cards[card.parent.id], card];
+                        delete prev.added.cards[card.parent.id];
+                    } else
+                        prev.cards[card.parent.id] = [prev.added.undefined.shift(), card];
+                else if (card.parent.name === "kanban_card" && card.parent && card.parent.id && prev.cards[card.parent.id])
+                    prev.cards[card.parent.id].push(card);
+                return prev;
+            }, {
+                added: { undefined: [], cards: {} }, cards: {}
+            });
             break;
         case "progress":
             let sessions = data.log.reduce((prev, curr) => {
@@ -109,66 +152,22 @@ ccm.files["monitor.kanban.js"] = function (data, instance) {
             break;
         default: break;
     }
-    
-    let logs = data.log;
-    let lanesCount = logs.filter(curr => curr.event === "drop").reduce((p,c) => c.data.to[0] > p ? c.data.to[0] : p, 0);
-    let board = {};
-    for (let i = 0; i <= lanesCount; i++)
-        board["lane-"+i] = [];
-    let accumulatedLogs = logs.reduce((prev, curr) => {
 
-
-        prev.push({created_at: curr.created_at, board: Object.assign({}, board)});
-
-        return prev;
-    }, []);
     /*
-    let interval = helper.timeSlices.get("1d");
-    let domain = helper.datetime.range(logs);
-    let lanesCount = logs.filter(curr => curr.event === "drop").reduce((p,c) => c.data.to[0] > p ? c.data.to[0] : p, 0);
-    let board = {};
-    for (let i = 0; i <= lanesCount; i++)
-        board["lane-"+i] = [];
-    let histogram = helper.datetime.histogram(logs, domain, ...interval);
-
-    let cards = logs.reduce((prev, curr) => {
-        if (curr.event === "add")
-            prev.unassigned.push(curr);
-        else if (curr.event === "drop" || curr.event === "del") {
-            if (!prev.hasOwnProperty(curr.data.data[2].data.key)) {
-                // wenn card key noch nicht bekannt -> entnehme 1 unassigned
-                prev[curr.data.data[2].data.key] = [curr];
-                // ältestes
-                prev[curr.data.data[2].data.key].splice(0, 0, prev.unassigned.shift())
-            }
-            else
-                prev[curr.data.data[2].data.key].push(curr);
-        } else if (curr.parent.name === "kanban_card") {
-            if (!prev.hasOwnProperty(curr.parent.descr)) {
-                // wenn card key noch nicht bekannt -> entnehme 1 unassigned
-                prev[curr.parent.descr] = [curr];
-                // ältestes
-                prev[curr.parent.descr].splice(0, 0, prev.unassigned.shift())
-            }
-            else
-                prev[curr.parent.descr].push(curr);
+    reduce mock backlog
+    let count = 0
+    log = log.reduce((prev, curr) => {
+        if (curr.event === "add") {
+            if (count < 85)
+                prev.push(curr);
+            count++
         }
+        else
+            prev.push(curr)
         return prev;
-    }, { unassigned: [] });
-
-    let unassigned = helper.datetime.histogram(cards.unassigned, domain, ...interval);
-    delete cards.unassigned;
-
-    unassigned = unassigned.reduce((p,c) => {
-        let b = $.clone(board);
-        b
-        p.push()
     }, []);
-    console.log(unassigned)
+     */
 
-    */
-
-    //console.log(settings)
     return settings;
 
 };

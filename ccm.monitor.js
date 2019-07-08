@@ -71,11 +71,11 @@
         Instance: function () {
 
             const self = this;
-            let $, navContainer, time, rerender = true;
+            let $, navContainer, rerender = true;
 
             this.init = async () => {
 
-
+                // creates process worker
                 if (self.worker)
                     try {
                         let workerUrl = self.worker;
@@ -107,8 +107,6 @@
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/drilldown.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/highcharts-more.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/networkgraph.js" );
-
-                //await self.ccm.load( "https://code.highcharts.com/modules/series-label.js" );
                 await self.ccm.load( "https://cdnjs.cloudflare.com/ajax/libs/highcharts/7.1.2/modules/heatmap.js" );
 
                 // load jsonLogic only once
@@ -121,24 +119,18 @@
                 !window.moment && await self.ccm.load( this.ccm.components[ component.index ].lib || "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js" );
                 await self.ccm.load("https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.13/moment-timezone-with-data-2012-2022.min.js");
 
-                // load jsonLogic only once
+                // load cmMonitorHelper only once
                 !window.cmMonitorHelper && await self.ccm.load("https://mnutze.github.io/bsc.monitor/assets/cmMonitorHelper.js");
 
-                Highcharts.dateFormats = {
-                    W: function (timestamp) {
-                        return moment(timestamp).isoWeek();
-                    }
-                };
+                // set Highcharts options
+                Highcharts.dateFormats = { W: timestamp => moment(timestamp).isoWeek() };
                 Highcharts.setOptions( { time: { timezone: 'Europe/Berlin' } } );
 
-                function has (key) { return !!$.deepValue(this, key); }
+                // extend jsonLogic-Filter by custom
                 function range (start, end) { return (new Date(this.created_at) > start && new Date(this.created_at) < end); }
-                jsonLogic.add_operation("has", has);
+                jsonLogic.add_operation("has", key => !!$.deepValue(this, key) );
                 jsonLogic.add_operation("range", range);
 
-                time = {
-
-                };
             };
 
             this.ready = async () => {
@@ -182,13 +174,15 @@
                     });
                 }
 
-                // if dashboard widget -> validate initial monitor data if
+                // if dashboard widget -> validate initial monitor data if submitted
                 if (self.sources) {
                     let __sources = Object.keys(self.sources);
                     __sources.forEach(src => {
                         if (!self.data[self.sources[src].name])
                             self.data[self.sources[src].name] = [];
-                        self.data[self.sources[src].name] = self.helper.filterData(self.data[self.sources[src].name], self.sources[src].filter)
+                        console.time("sourceFilter")
+                        self.data[self.sources[src].name] = self.helper.filterData(self.data[self.sources[src].name], self.sources[src].filter);
+                        console.timeEnd("sourceFilter")
                     });
                 }
 
