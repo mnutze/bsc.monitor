@@ -130,13 +130,13 @@ self.addEventListener("message", function (event) {
         let list = week.reduce((prev, curr) => {
 
             // learners
-            if (!stats.online.sum.includes(curr.user.user))
+            if (curr.user && !stats.online.sum.includes(curr.user.user))
                 stats.online.sum.push(curr.user.user);
 
-            if (moment(curr.created_at) > lastWeek[0] && moment(curr.created_at) < lastWeek[1] && !stats.online.weekly.last.includes(curr.user.user))
+            if (curr.user && moment(curr.created_at) > lastWeek[0] && moment(curr.created_at) < lastWeek[1] && !stats.online.weekly.last.includes(curr.user.user))
                 stats.online.weekly.last.push(curr.user.user);
 
-            if (moment(curr.created_at) > currentWeek[0] && moment(curr.created_at) < currentWeek[1] && !stats.online.weekly.current.includes(curr.user.user))
+            if (curr.user && moment(curr.created_at) > currentWeek[0] && moment(curr.created_at) < currentWeek[1] && !stats.online.weekly.current.includes(curr.user.user))
                 stats.online.weekly.current.push(curr.user.user);
 
             // general activities
