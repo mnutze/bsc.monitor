@@ -159,20 +159,18 @@
 
             this.start = async () => {
                 // put main HTML structure into frontend
-                $.setContent( self.element, $.html( self.html.main, {
-                    loading: $.loading()
-                } ) );
+                $.setContent( self.element, $.html( self.html.main, { loading: $.loading() } ) );
 
-                self.element.style = "height: inherit;";
+                // set monitor size
                 if (!self.size) {
+                    // stand-alone monitor running -> set height to full viewport height
                     self.element.style = "height: 100vh;";
                     self.size = self.element.getBoundingClientRect();
-                } else {
+                } else
                     self.element.style = $.format("height: %height%px; width: %width%px", {
                         height: self.size.height - 50,
                         width: self.size.width - 30
                     });
-                }
 
                 // if dashboard widget -> validate initial monitor data if submitted
                 if (self.sources) {
@@ -180,16 +178,14 @@
                     __sources.forEach(src => {
                         if (!self.data[self.sources[src].name])
                             self.data[self.sources[src].name] = [];
-                        console.time("sourceFilter")
                         self.data[self.sources[src].name] = self.helper.filterData(self.data[self.sources[src].name], self.sources[src].filter);
-                        console.timeEnd("sourceFilter")
                     });
                 }
 
-                // render
                 await update();
 
-                // register store onchange listener
+                /** if monitor don't get data from a central (dashboard) instance by self.update
+                 * monitor must have at least one store! if realtime monitor -> register store onchange listener */
                 if ($.isObject(self.stores) && Object.keys(self.stores).length > 0) {
                     let keys = Object.keys(self.stores);
                     for (let key of keys)
@@ -245,6 +241,7 @@
                         course: self.course ? self.course : undefined,
                         data: data,
                         groupBy: self.groupBy ? self.groupBy : undefined,
+                        filter: self.filter,
                         incompleteLog: self.incompleteLog ? self.incompleteLog : false,
                         interval: self.interval ? self.interval : undefined,
                         limit: self.limit ? self.limit : undefined,
@@ -269,6 +266,7 @@
                 }
             };
 
+            // kill process worker
             this.terminateWorker = () => self.worker.terminate();
 
             this.update = async (dataset, source, flag) => await update(dataset, self.sources[source], flag);
@@ -327,6 +325,7 @@
                         course: self.course ? self.course : undefined,
                         data: data,
                         groupBy: self.groupBy ? self.groupBy : undefined,
+                        filter: self.filter,
                         incompleteLog: self.incompleteLog ? self.incompleteLog : false,
                         interval: self.interval ? self.interval : undefined,
                         limit: self.limit ? self.limit : undefined,
